@@ -144,6 +144,15 @@ class SecurityGroupTranslator(protected val storage: ReadOnlyStorage)
         // Delete associated SecurityGroupRules.
         ops ++= sg.getSecurityGroupRulesList.asScala map (
                 r => Delete(classOf[SecurityGroupRule], r.getId))
+
+        // Find all the rules that have back reference to IP Address Group with the same ID as deleted security group
+        val rules = storage.getAll(classOf[Rule]).await()
+        for (rule <- rules if rule.getCondition.getIpAddrGroupIdDst == sg.getId ||
+            rule.getCondition.getIpAddrGroupIdSrc == sg.getId) {
+            log.warn("Found a rule that targets deleted group. That should not occur, so rule will be deleted.")
+            ops += Delete(classOf[Rule], rule.getId)
+        }
+
         ops += Delete(classOf[Chain], inChainId(sg.getId))
         ops += Delete(classOf[Chain], outChainId(sg.getId))
         ops += Delete(classOf[IPAddrGroup], sg.getId)
