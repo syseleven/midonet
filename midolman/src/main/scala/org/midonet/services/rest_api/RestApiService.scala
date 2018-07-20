@@ -109,7 +109,6 @@ class RestApiService @Inject()(
         try {
             try {
                 val file = new File(socketPath)
-                file.delete
                 file.getParentFile.mkdirs
             } catch {
                 case NonFatal(e) => // ok to ignore
