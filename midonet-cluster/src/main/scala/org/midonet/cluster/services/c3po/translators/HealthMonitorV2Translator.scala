@@ -149,7 +149,15 @@ class HealthMonitorV2Translator
             .setTimeout(nHm.getTimeout)
             .addAllPoolIds(nHm.getPoolsList.asScala.map(_.getId).asJava)
             .setId(nHm.getId)
+            .setExpectedCodes(nHm.getExpectedCodes)
+            .setHttpMethod(nHm.getHttpMethod)
+            .setUrlPath(nHm.getUrlPath)
 
+        hm.setType(nHm.getType match {
+            case NeutronHealthMonitorV2.HealthMonitorV2Type.HTTP => HealthMonitor.HealthMonitorType.HTTP
+            case NeutronHealthMonitorV2.HealthMonitorV2Type.HTTPS => HealthMonitor.HealthMonitorType.HTTPS
+            case _ => HealthMonitor.HealthMonitorType.TCP
+        })
         hm.build
     }
 }

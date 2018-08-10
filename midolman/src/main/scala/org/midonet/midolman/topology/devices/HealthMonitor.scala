@@ -47,8 +47,18 @@ class HealthMonitor extends ZoomObject with Device {
     @ZoomField(name = "max_retries")
     var maxRetries: Int = _
 
+    @ZoomField(name = "expected_codes")
+    var expectedCodes: String = ""
+
+    @ZoomField(name = "http_method")
+    var httpMethod: String = ""
+
+    @ZoomField(name = "url_path")
+    var urlPath: String = ""
+
     def this(id: UUID, adminStateUp: Boolean, t: HealthMonitorType,
-             status: LBStatus, delay: Int, timeout: Int, maxRetries: Int) = {
+             status: LBStatus, delay: Int, timeout: Int, maxRetries: Int,
+             expectedCodes: String, httpMethod: String, urlPath: String) = {
         this()
         this.id = id
         this.adminStateUp = adminStateUp
@@ -57,11 +67,16 @@ class HealthMonitor extends ZoomObject with Device {
         this.delay = delay
         this.timeout = timeout
         this.maxRetries = maxRetries
+        this.expectedCodes = expectedCodes
+        this.httpMethod = httpMethod
+        this.urlPath = urlPath
     }
 
     override def toString =
         s"HealthMonitor [id=$id adminStateUp=$adminStateUp " +
         s"healthMonitorType=$healthMonitorType status=$status " +
-        s"delay=$delay timeout=$timeout maxRetries=$maxRetries]"
+        s"delay=$delay timeout=$timeout maxRetries=$maxRetries " +
+        s"expectedCodes=$expectedCodes httpMethod=$httpMethod " +
+        s"urlPath=$urlPath]"
 }
 

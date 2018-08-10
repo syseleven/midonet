@@ -63,7 +63,10 @@ class HealthMonitorConversionTest extends FeatureSpec
                 status = LBStatus.ACTIVE,
                 delay = random.nextInt(),
                 timeout = random.nextInt(),
-                maxRetries = random.nextInt()
+                maxRetries = random.nextInt(),
+                expectedCodes = "",
+                httpMethod = "",
+                urlPath = ""
             )
             val proto = ZoomConvert.toProto(zoomObj, classOf[Proto.HealthMonitor])
             zoomObj shouldBeDeviceOf proto

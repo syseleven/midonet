@@ -959,7 +959,10 @@ trait TopologyBuilder {
                             status: Option[LBStatus] = None,
                             delay: Option[Int] = None,
                             timeout: Option[Int] = None,
-                            maxRetries: Option[Int] = None) : HealthMonitor = {
+                            maxRetries: Option[Int] = None,
+                            expectedCodes: Option[String] = None,
+                            httpMethod: Option[String] = None,
+                            urlPath: Option[String] = None) : HealthMonitor = {
         val builder = HealthMonitor.newBuilder()
             .setId(id.asProto).setAdminStateUp(adminStateUp)
         if (healthMonitorType.isDefined)
@@ -972,6 +975,12 @@ trait TopologyBuilder {
             builder.setTimeout(timeout.get)
         if (maxRetries.isDefined)
             builder.setMaxRetries(maxRetries.get)
+        if (expectedCodes.isDefined)
+            builder.setExpectedCodes(expectedCodes.get)
+        if (httpMethod.isDefined)
+            builder.setHttpMethod(httpMethod.get)
+        if (urlPath.isDefined)
+            builder.setUrlPath(urlPath.get)
         builder.build()
     }
 

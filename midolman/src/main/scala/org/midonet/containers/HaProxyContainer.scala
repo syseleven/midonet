@@ -228,8 +228,11 @@ class HaProxyContainer @Inject()(
                                      pm.address.toString, pm.protocolPort)
 
             val hm = phm.healthMonitor
-            val hmCfg = HealthMonitorV2Config(hm.id, hm.adminStateUp, hm.delay,
-                                              hm.timeout, hm.maxRetries)
+            val hmCfg = HealthMonitorV2Config(hm.id,
+                                              hm.healthMonitorType,
+                                              hm.adminStateUp, hm.delay,
+                                              hm.timeout, hm.maxRetries,
+                                              hm.expectedCodes, hm.httpMethod, hm.urlPath)
 
             PoolV2Config(poolId, members.toSet, hmCfg)
         }
