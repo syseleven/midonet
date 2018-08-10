@@ -18,6 +18,7 @@ package org.midonet.midolman.l4lb
 import java.util.UUID
 
 import scala.collection.immutable.Set
+import org.midonet.midolman.state.l4lb.HealthMonitorType
 
 case class ListenerV2Config(id: UUID, adminStateUp: Boolean, port: Int,
                             poolId: UUID)
@@ -25,8 +26,12 @@ case class ListenerV2Config(id: UUID, adminStateUp: Boolean, port: Int,
 case class MemberV2Config(id: UUID, adminStateUp: Boolean, address: String,
                           port: Int)
 
-case class HealthMonitorV2Config(id: UUID, adminStateUp: Boolean, delay: Int,
-                                 timeout: Int, maxRetries: Int)
+case class HealthMonitorV2Config(id: UUID,
+                                 healthMonitorType: HealthMonitorType,
+                                 adminStateUp: Boolean, delay: Int,
+                                 timeout: Int, maxRetries: Int,
+                                 expectedCodes: String, httpMethod: String,
+                                 urlPath: String)
 
 case class PoolV2Config(id: UUID, members: Set[MemberV2Config],
                         healthMonitor: HealthMonitorV2Config)
@@ -72,8 +77,17 @@ case class LoadBalancerV2Config(id: UUID,
                     |    timeout check ${p.healthMonitor.timeout}s
                     |""".stripMargin
 
+            val hm = p.healthMonitor
+
+            if (hm.healthMonitorType == HealthMonitorType.HTTP) {
+                conf append s" option httpchk ${hm.httpMethod} ${hm.urlPath}\n"
+
+                if (hm.expectedCodes.nonEmpty) {
+                    conf append
+                      s"    http-check expect rstatus ${hm.expectedCodes.replace(',', '|')}\n"
+                }
+            }
             p.members filter (_.adminStateUp) foreach { m =>
-                val hm = p.healthMonitor
                 conf append
                     s"""
                        |    server ${m.id} ${m.address}:${m.port} check inter ${hm.delay}s fall ${hm.maxRetries}

@@ -61,6 +61,13 @@ class HealthMonitorV2Translator extends Translator[NeutronHealthMonitorV2] {
             .setTimeout(nHm.getTimeout)
             .addAllPoolIds(nHm.getPoolsList.asScala.map(_.getId).asJava)
             .setId(nHm.getId)
+            .setExpectedCodes(nHm.getExpectedCodes)
+            .setHttpMethod(nHm.getHttpMethod)
+            .setUrlPath(nHm.getUrlPath)
+
+        if (nHm.getType == NeutronHealthMonitorV2.HealthMonitorV2Type.HTTP) {
+            hm.setType(HealthMonitor.HealthMonitorType.HTTP)
+        }
 
         hm.build
     }

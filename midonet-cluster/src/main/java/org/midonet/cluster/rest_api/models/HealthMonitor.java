@@ -24,6 +24,7 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.MoreObjects;
 
+import org.midonet.cluster.data.Zoom;
 import org.midonet.cluster.data.ZoomClass;
 import org.midonet.cluster.data.ZoomField;
 import org.midonet.cluster.models.Topology;
@@ -56,6 +57,15 @@ public class HealthMonitor extends UriResource {
 
     @ZoomField(name = "max_retries")
     public int maxRetries;
+
+    @ZoomField(name = "expected_codes")
+    public String expectedCodes;
+
+    @ZoomField(name = "http_method")
+    public String httpMethod;
+
+    @ZoomField(name = "url_path")
+    public String urlPath;
 
     @JsonIgnore
     @ZoomField(name = "pool_ids")
@@ -97,6 +107,9 @@ public class HealthMonitor extends UriResource {
             .add("delay", delay)
             .add("timeout", timeout)
             .add("maxRetries", maxRetries)
+            .add("expectedCodes", expectedCodes)
+            .add("httpMethod", httpMethod)
+            .add("urlPath", urlPath)
             .toString();
     }
 }

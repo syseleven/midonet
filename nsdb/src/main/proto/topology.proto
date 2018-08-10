@@ -147,7 +147,10 @@ message DhcpV6 {
 }
 
 message HealthMonitor {
-    enum HealthMonitorType { TCP = 1; }
+    enum HealthMonitorType {
+        TCP = 1;
+        HTTP = 2;
+    }
 
     optional UUID id = 1;
     optional bool admin_state_up = 2;
@@ -156,6 +159,11 @@ message HealthMonitor {
     optional int32 delay = 5;
     optional int32 timeout = 6;
     optional int32 max_retries = 7;
+
+    optional string expected_codes = 8;
+    optional string http_method = 9;
+    optional string url_path = 10;
+
 
     // Backreferences
     repeated UUID pool_ids = 101;

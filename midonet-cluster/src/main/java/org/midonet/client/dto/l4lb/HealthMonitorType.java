@@ -17,5 +17,6 @@
 package org.midonet.client.dto.l4lb;
 
 public enum HealthMonitorType {
-    TCP
+    TCP,
+    HTTP
 }
