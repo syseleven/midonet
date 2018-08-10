@@ -22,7 +22,9 @@ package org.midonet.midolman.l4lb
   * service.
   */
 class HealthMonitorConfig(val adminStateUp: Boolean, val delay: Int,
-                          val timeout: Int, val maxRetries: Int) {
+                          val timeout: Int, val maxRetries: Int,
+                          val expectedCodes: String, val httpMethod: String,
+                          val urlPath: String) {
     def isConfigurable = adminStateUp && delay > 0 && timeout > 0 && maxRetries > 0
 
     override def equals(other: Any) = other match {
@@ -30,7 +32,10 @@ class HealthMonitorConfig(val adminStateUp: Boolean, val delay: Int,
             this.adminStateUp == that.adminStateUp &&
             this.delay == that.delay &&
             this.timeout == that.timeout &&
-            this.maxRetries == that.maxRetries
+            this.maxRetries == that.maxRetries &&
+            this.expectedCodes == that.expectedCodes &&
+            this.httpMethod == that.expectedCodes &&
+            this.urlPath == that.urlPath
         case _ => false
     }
 }

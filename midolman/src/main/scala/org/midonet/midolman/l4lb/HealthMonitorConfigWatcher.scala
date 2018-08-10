@@ -78,7 +78,10 @@ object HealthMonitorConfigWatcher {
                     data.healthMonitor.adminStateUp,
                     data.healthMonitor.delay,
                     data.healthMonitor.timeout,
-                    data.healthMonitor.maxRetries)
+                    data.healthMonitor.maxRetries,
+                    data.healthMonitor.expectedCodes,
+                    data.healthMonitor.httpMethod,
+                    data.healthMonitor.urlPath)
             val members = new MSet[PoolMemberConfig]()
             for (member: SimPoolMember <- data.poolMembers) {
                 members add new PoolMemberConfig(
