@@ -75,6 +75,7 @@ object HealthMonitorConfigWatcher {
                                        else null)
             }
             val hm = new HealthMonitorConfig(
+                    data.healthMonitor.healthMonitorType,
                     data.healthMonitor.adminStateUp,
                     data.healthMonitor.delay,
                     data.healthMonitor.timeout,
