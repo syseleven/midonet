@@ -43,6 +43,7 @@ import org.midonet.cluster.util.SequenceDispenser
 import org.midonet.midolman.config.MidolmanConfig
 import org.midonet.midolman.l4lb.HaproxyHealthMonitor.{ConfigUpdate, RouterAdded, RouterRemoved, SetupFailure}
 import org.midonet.midolman.l4lb.HealthMonitor.{ConfigAdded, ConfigDeleted, ConfigUpdated, RouterChanged}
+import org.midonet.midolman.state.l4lb.HealthMonitorType
 import org.midonet.midolman.util.MidolmanSpec
 import org.midonet.util.MidonetEventually
 
@@ -417,7 +418,7 @@ class HealthMonitorTest extends MidolmanSpec
     def createFakePoolConfig(poolId: UUID, adminStateUp: Boolean = true)
     : PoolConfig = {
         val vip = new VipConfig(true, UUID.randomUUID(), "9.9.9.9", 89, null)
-        val healthMonitor = new HealthMonitorConfig(true, 5, 10, 7)
+        val healthMonitor = new HealthMonitorConfig(HealthMonitorType.TCP,true, 5, 10, 7, "", "", "")
         val member1  = new PoolMemberConfig(true, UUID.randomUUID(),
                                             10, "10.11.12.13", 81)
         val member2  = new PoolMemberConfig(true, UUID.randomUUID(),

@@ -142,9 +142,9 @@ public class DtoHealthMonitor {
                 maxRetries == that.getMaxRetries() &&
                 adminStateUp == that.isAdminStateUp() &&
                 status == that.getStatus() &&
-                expectedCodes.equals(that.getExpectedCodes()) &&
-                httpMethod.equals(that.getHttpMethod()) &&
-                urlPath.equals(that.getUrlPath());
+                Objects.equal(expectedCodes, that.getExpectedCodes()) &&
+                Objects.equal(httpMethod, that.getHttpMethod()) &&
+                Objects.equal(urlPath, that.getUrlPath());
     }
 
     @Override

@@ -48,13 +48,13 @@ class HealthMonitor extends ZoomObject with Device {
     var maxRetries: Int = _
 
     @ZoomField(name = "expected_codes")
-    var expectedCodes: String = _
+    var expectedCodes: String = ""
 
     @ZoomField(name = "http_method")
-    var httpMethod: String = _
+    var httpMethod: String = ""
 
     @ZoomField(name = "url_path")
-    var urlPath: String = _
+    var urlPath: String = ""
 
     def this(id: UUID, adminStateUp: Boolean, t: HealthMonitorType,
              status: LBStatus, delay: Int, timeout: Int, maxRetries: Int,

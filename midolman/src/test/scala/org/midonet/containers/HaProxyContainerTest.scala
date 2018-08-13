@@ -21,15 +21,12 @@ import java.util.concurrent.ExecutorService
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 import com.typesafe.config.{Config, ConfigFactory}
-
 import org.junit.runner.RunWith
 import org.mockito.Mockito._
 import org.mockito.{ArgumentCaptor, Mockito, Matchers => MMatchers}
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-
 import org.midonet.cluster.data.storage.{SingleValueKey, StateStorage, Storage}
 import org.midonet.cluster.models.Commons.{LBStatus, UUID => PUUID}
 import org.midonet.cluster.models.State.ContainerStatus.{Code => StatusCode}
@@ -39,6 +36,7 @@ import org.midonet.cluster.topology.TopologyBuilder
 import org.midonet.cluster.util.UUIDUtil.asRichProtoUuid
 import org.midonet.midolman.haproxy.HaproxyHelper
 import org.midonet.midolman.l4lb.{HealthMonitor => _, _}
+import org.midonet.midolman.state.l4lb.HealthMonitorType
 import org.midonet.midolman.topology.VirtualTopology
 import org.midonet.midolman.util.MidolmanSpec
 import org.midonet.packets.{IPv4Addr, IPv4Subnet, MAC}
@@ -378,7 +376,11 @@ class HaProxyContainerTest extends MidolmanSpec
 
     private def toHmConfig(hmId: PUUID): HealthMonitorV2Config = {
         val hm = store.get(classOf[HealthMonitor], hmId).await()
-        HealthMonitorV2Config(hmId.asJava, hm.getAdminStateUp,
-                              hm.getDelay, hm.getTimeout, hm.getMaxRetries)
+        HealthMonitorV2Config(hmId.asJava,
+                              HealthMonitorType.fromProto(hm.getType),
+                              hm.getAdminStateUp,
+                              hm.getDelay, hm.getTimeout, hm.getMaxRetries,
+                              hm.getExpectedCodes, hm.getHttpMethod,
+                              hm.getUrlPath)
     }
 }
