@@ -54,6 +54,15 @@ class HealthMonitor(resource_base.ResourceBase,
         pools = [pool.Pool(self.dto['pools'], p, self.auth) for p in pools]
         return pools
 
+    def get_expected_codes(self):
+        return self.dto['expectedCodes']
+
+    def get_http_method(self):
+        return self.dto['httpMethod']
+
+    def get_url_path(self):
+        return self.dto['urlPath']
+
     def id(self, id):
         self.dto['id'] = id
         return self
@@ -80,3 +89,12 @@ class HealthMonitor(resource_base.ResourceBase,
 
     def add_pool(self):
         return pool.Pool(self.dto['pools'], {}, self.auth)
+
+    def expected_codes(self, expected_codes):
+        self.dto['expectedCodes'] = expected_codes
+
+    def http_method(self, http_method):
+        self.dto['httpMethod'] = http_method
+
+    def url_path(self, url_path):
+        self.dto['urlPath'] = url_path
