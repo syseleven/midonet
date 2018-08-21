@@ -109,7 +109,7 @@ object DatapathController extends Referenceable {
     // Default MTU supported by the underlay accounting for the tunnel overhead.
     // This value is just a reference in case there are no tunnel interfaces
     // configured.
-    private[midolman] var defaultMtu: Short = _
+    private[midolman] var defaultMtu: Int = _
 
     /**
      * This message is sent when the separate thread has successfully
@@ -125,7 +125,7 @@ object DatapathController extends Referenceable {
       * interfaces and accounting for the tunnel overhead. VM interfaces should
       * not have an MTU higher than this minMtu to avoid fragmentation.
       */
-    @volatile var minMtu: Short = _
+    @volatile var minMtu: Int = _
 }
 
 
@@ -374,7 +374,7 @@ class DatapathController @Inject() (val driver: DatapathStateDriver,
     }
 
     private def setTunnelMtu(interfaces: JSet[InterfaceDescription]) = {
-        var minTunnelMtu = Short.MaxValue
+        var minTunnelMtu = Int.MaxValue
         val overhead = VxLanTunnelPort.TunnelOverhead
 
         // Check the interfaces associated to a tunnel zone (tunnel interface).
@@ -384,11 +384,11 @@ class DatapathController @Inject() (val driver: DatapathStateDriver,
               if InetAddress.getByAddress(zone._2.toBytes) == inetAddress
         } {
             // Keep the minimum of those accounting for the tunnel overhead
-            val tunnelMtu = (intf.getMtu - overhead).toShort
+            val tunnelMtu = intf.getMtu - overhead
             minTunnelMtu = minTunnelMtu.min(tunnelMtu)
         }
 
-        if (minTunnelMtu == Short.MaxValue) {
+        if (minTunnelMtu == Int.MaxValue) {
             if (minMtu != defaultMtu) {
                 log.info(
                     s"There is no interface in any tunnel zone. Updating " +
@@ -396,6 +396,9 @@ class DatapathController @Inject() (val driver: DatapathStateDriver,
                 minMtu = defaultMtu
             }
         } else if (minMtu != minTunnelMtu) {
+            if (minTunnelMtu > 0xffff) {
+                minTunnelMtu = 0xffff
+            }
             log.info(s"Updating underlay MTU from $minMtu to $minTunnelMtu.")
             minMtu = minTunnelMtu
         } // else => no change on the minimum mtu
