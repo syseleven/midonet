@@ -481,7 +481,7 @@ object DhcpValueParser {
 
 object DhcpImpl {
     def apply(dhcpCfg: DhcpConfig, inPort: Port, request: DHCP,
-              sourceMac: MAC, underlayMtu: Short, configMtu: Short,
+              sourceMac: MAC, underlayMtu: Int, configMtu: Int,
               log: Logger) = {
         new DhcpImpl(dhcpCfg, request, sourceMac, underlayMtu, configMtu, log).handleDHCP(inPort)
     }
@@ -504,7 +504,7 @@ trait DhcpConfig {
 
 class DhcpImpl(val dhcpConfig: DhcpConfig,
                val request: DHCP, val sourceMac: MAC,
-               val underlayMtu: Short, val configMtu: Short,
+               val underlayMtu: Int, val configMtu: Int,
                val log: Logger) {
     import DhcpValueParser._
 
@@ -516,7 +516,7 @@ class DhcpImpl(val dhcpConfig: DhcpConfig,
     private var opt121Routes: mutable.Buffer[Opt121] = null
     private var dnsServerAddrsBytes: List[Array[Byte]] = Nil
 
-    private var interfaceMTU : Short = 0
+    private var interfaceMTU : Int = 0
 
     def handleDHCP(port: Port) : Option[Ethernet] = {
         // These fields are decided based on the port configuration.
@@ -582,9 +582,9 @@ class DhcpImpl(val dhcpConfig: DhcpConfig,
 
                 (sub.getInterfaceMTU match {
                     case 0 =>
-                        Some(Math.min(configMtu, underlayMtu).toShort)
+                        Some(Math.min(configMtu, underlayMtu))
                     case subnetMtu: Short =>
-                        Some(Math.min(subnetMtu, underlayMtu).toShort)
+                        Some(Math.min(subnetMtu, underlayMtu))
                 }) match {
                     case Some(minMtu) =>
                         interfaceMTU = minMtu
@@ -771,8 +771,8 @@ class DhcpImpl(val dhcpConfig: DhcpConfig,
         optionMap.put(DHCPOption.Code.INTERFACE_MTU.value,
             new DHCPOption(DHCPOption.Code.INTERFACE_MTU.value,
                 DHCPOption.Code.INTERFACE_MTU.length,
-                Array[Byte]((interfaceMTU/256).toByte,
-                    (interfaceMTU%256).toByte)))
+                Array[Byte](((interfaceMTU >> 8) & 0xff).toByte,
+                    (interfaceMTU & 0xff).toByte)))
         if (routerAddr != null) {
             optionMap.put(DHCPOption.Code.ROUTER.value,
                 new DHCPOption(DHCPOption.Code.ROUTER.value,
