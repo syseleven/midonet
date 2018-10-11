@@ -115,7 +115,7 @@ class ZoomSerializerTest extends FeatureSpec with Matchers with GivenWhenThen {
         Then("The data should be null")
         data2 shouldBe null
 
-        When("Updating the object with different owner and change type")
+        When("Updating the object with different change type")
         val data3 =
             ZoomSerializer.updateProvenance(data1, ZoomOwner.ClusterContainers,
                                             2, 2)
@@ -155,6 +155,86 @@ class ZoomSerializerTest extends FeatureSpec with Matchers with GivenWhenThen {
 
         Then("The data should be null")
         data5 shouldBe null
+    }
+
+    scenario("Test update object with the alternating owners") {
+        Given("The data for the current object")
+        val data1 =
+            ZoomSerializer.createProvenance(ZoomOwner.ClusterContainers, 1, 0)
+
+        When("Updating the object with different owner")
+        val data2 =
+            ZoomSerializer.updateProvenance(data1, ZoomOwner.AgentBinding,
+                2, 1)
+
+        Then("The data can be deserialized to provenance")
+        val obj1 = ZoomObject.parseFrom(data2)
+
+        obj1.getProvenanceCount shouldBe 2
+        obj1.getProvenance(0).getProductVersion shouldBe Storage.ProductVersion
+        obj1.getProvenance(0).getProductCommit shouldBe Storage.ProductCommit
+        obj1.getProvenance(0).getChangeOwner shouldBe ZoomOwner.ClusterContainers.id
+        obj1.getProvenance(0).getChangeType shouldBe 1
+        obj1.getProvenance(0).getChangeVersion shouldBe 0
+        obj1.getProvenance(1).getProductVersion shouldBe Storage.ProductVersion
+        obj1.getProvenance(1).getProductCommit shouldBe Storage.ProductCommit
+        obj1.getProvenance(1).getChangeOwner shouldBe ZoomOwner.AgentBinding.id
+        obj1.getProvenance(1).getChangeType shouldBe 2
+        obj1.getProvenance(1).getChangeVersion shouldBe 1
+
+        When("Updating the object with 1st owner, but different change type")
+        val data3 =
+            ZoomSerializer.updateProvenance(data2, ZoomOwner.ClusterContainers,
+                2, 2)
+
+        Then("The data can be deserialized to provenance")
+        val obj2 = ZoomObject.parseFrom(data3)
+
+        obj2.getProvenanceCount shouldBe 2
+        obj2.getProvenance(0).getProductVersion shouldBe Storage.ProductVersion
+        obj2.getProvenance(0).getProductCommit shouldBe Storage.ProductCommit
+        obj2.getProvenance(0).getChangeOwner shouldBe ZoomOwner.ClusterContainers.id
+        obj2.getProvenance(0).getChangeType shouldBe 3
+        obj2.getProvenance(0).getChangeVersion shouldBe 0
+        obj2.getProvenance(1).getProductVersion shouldBe Storage.ProductVersion
+        obj2.getProvenance(1).getProductCommit shouldBe Storage.ProductCommit
+        obj2.getProvenance(1).getChangeOwner shouldBe ZoomOwner.AgentBinding.id
+        obj2.getProvenance(1).getChangeType shouldBe 2
+        obj2.getProvenance(1).getChangeVersion shouldBe 1
+
+        When("Updating the object with 2nd owner and same change type")
+        val data4 =
+            ZoomSerializer.updateProvenance(data3, ZoomOwner.AgentBinding,
+                2, 3)
+
+        Then("The data should be null")
+        data4 shouldBe null
+
+        When("Updating the object with 1st owner and same change type")
+        val data5 =
+            ZoomSerializer.updateProvenance(data3, ZoomOwner.ClusterContainers,
+                2, 4)
+
+        Then("The data should be null")
+        data5 shouldBe null
+    }
+
+    scenario("Test object updates don't let provenance list grow too much") {
+        Given("The data for the current object")
+        var data =
+            ZoomSerializer.createProvenance(ZoomOwner.ClusterContainers, 1, 0)
+
+        When("Updating the object with multiple owners more than 20 times")
+        for (i <- 1 to 30 by 3) {
+            data = ZoomSerializer.updateProvenance(data, ZoomOwner.ClusterApi, 2, i)
+            data = ZoomSerializer.updateProvenance(data, ZoomOwner.AgentBinding, 2, i + 1)
+            data = ZoomSerializer.updateProvenance(data, ZoomOwner.ClusterContainers, 2, i + 2)
+        }
+
+        Then("The data can be deserialized to provenance")
+        val obj = ZoomObject.parseFrom(data)
+
+        obj.getProvenanceCount shouldBe 20
     }
 
     scenario("Test update object on invalid data") {
