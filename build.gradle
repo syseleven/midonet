@@ -17,7 +17,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 project.ext {
-    midonetVersion = "5.4.6-se1"
+    midonetVersion = "5.4.6-se3"
     vendor = 'MidoNet'
     maintainer = "MidoNet user list <midonet-user@midonet.org>"
     url = "http://midonet.org"
@@ -233,6 +233,8 @@ allprojects {
             def genDir = file("${buildDir}/generated/java")
             sourceDirs += genDir
             idea.module.iml.withXml { p -> addProtobufFacet(p, genDir) }
+            genDir = file("${buildDir}/generated/source")
+            sourceDirs += genDir
         }
 
         inheritOutputDirs = false
@@ -448,9 +450,9 @@ configure(subprojects.findAll {!it.name.contains('ovsdb')}) {
         dependsOn(compileBenchmarks)
     }
 
-    tasks.build {
-        dependsOn(compileBenchmarks)
-    }
+    //tasks.build {
+    //    dependsOn(compileBenchmarks)
+    //}
 
     cobertura {
         coverageDirs << file("midonet-util/build/classes/main")
