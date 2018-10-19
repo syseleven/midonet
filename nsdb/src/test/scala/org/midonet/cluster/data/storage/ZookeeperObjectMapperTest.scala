@@ -1021,10 +1021,19 @@ class ZookeeperObjectMapperTest extends StorageTest with MidonetBackendTest
             When("Updating the network in storage")
             zoom.tryTransaction(ZoomOwner.ClusterNeutron) { _.update(network) }
 
+            Then("The provenance data is not updated")
+            obj = ZoomObject.parseFrom(curator.getData.forPath(path))
+            obj.getProvenanceCount shouldBe 2
+            obj.getProvenance(1).getChangeOwner shouldBe ZoomOwner.ClusterApi.id
+            obj.getProvenance(1).getChangeType shouldBe ZoomChange.Data.id
+
+            When("Updating the network in storage")
+            zoom.tryTransaction(ZoomOwner.AgentBinding) { _.update(network) }
+
             Then("The provenance data is updated")
             obj = ZoomObject.parseFrom(curator.getData.forPath(path))
             obj.getProvenanceCount shouldBe 3
-            obj.getProvenance(2).getChangeOwner shouldBe ZoomOwner.ClusterNeutron.id
+            obj.getProvenance(2).getChangeOwner shouldBe ZoomOwner.AgentBinding.id
             obj.getProvenance(2).getChangeType shouldBe ZoomChange.Data.id
         }
     }

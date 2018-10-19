@@ -43,6 +43,7 @@ private[storage] object ZoomSerializer {
     private val JsonFactory = new JsonFactory(new ObjectMapper())
     private val ProtoParser = createProtoParser
     private val Utf8 = Charset.forName("UTF-8")
+    private val MaxProvenanceCount = 20
 
     private val Deserializers =
         new TrieMap[Class[_], Func1[ChildData, Notification[_]]]
@@ -118,34 +119,47 @@ private[storage] object ZoomSerializer {
             catch {
                 case NonFatal(e) => throw new InternalObjectMapperException(e)
             }
-        val count = builder.getProvenanceCount
-        if (count > 0 && {
-            val provenanceBuilder = builder.getProvenanceBuilder(count - 1)
-            provenanceBuilder.getChangeOwner == owner.id &&
-            provenanceBuilder.getProductVersion == Storage.ProductVersion &&
-            provenanceBuilder.getProductCommit == Storage.ProductCommit
-        }) {
-            if ((builder.getProvenanceBuilder(count - 1).getChangeType & change) != 0) {
-                // If the provenance change type is already included in
-                // the previous change, return null (no need to update).
-                null
-            } else {
-                // If the provenance change type has changed, update the
-                // change type.
-                builder.getProvenanceBuilder(count - 1)
-                    .setChangeType(change |
-                                   builder.getProvenanceBuilder(count - 1).getChangeType)
+
+        lastMatchingProvenance(builder, owner) match {
+            case Some(provenanceBuilder) =>
+                if ((provenanceBuilder.getChangeType & change) != 0) {
+                    // If the provenance change type is already included in
+                    // the previous change, return null (no need to update).
+                    null
+                } else {
+                    // If the provenance change type has changed, update the
+                    // change type.
+                    provenanceBuilder.setChangeType(change | provenanceBuilder.getChangeType)
+                    builder.build().toByteArray
+                }
+            case _ => {
+                builder.addProvenance(ZoomProvenance.newBuilder()
+                  .setProductVersion(Storage.ProductVersion)
+                  .setProductCommit(Storage.ProductCommit)
+                  .setChangeOwner(owner.id)
+                  .setChangeType(change)
+                  .setChangeVersion(version))
+                while (builder.getProvenanceCount > MaxProvenanceCount) {
+                    builder.removeProvenance(0)
+                }
                 builder.build().toByteArray
             }
-        } else {
-            builder.addProvenance(ZoomProvenance.newBuilder()
-                                            .setProductVersion(Storage.ProductVersion)
-                                            .setProductCommit(Storage.ProductCommit)
-                                            .setChangeOwner(owner.id)
-                                            .setChangeType(change)
-                                            .setChangeVersion(version))
-            builder.build().toByteArray
         }
+    }
+
+    private def lastMatchingProvenance(builder: ZoomObject.Builder, owner: ZoomOwner)
+    : Option[ZoomProvenance.Builder] = {
+        val count = builder.getProvenanceCount
+        for (i <- 1 to 2 if i <= count) {
+            val provenanceBuilder = builder.getProvenanceBuilder(count - i)
+            if (provenanceBuilder.getChangeOwner == owner.id &&
+                provenanceBuilder.getProductVersion == Storage.ProductVersion &&
+                provenanceBuilder.getProductCommit == Storage.ProductCommit
+            ) {
+                return Some(provenanceBuilder)
+            }
+        }
+        None
     }
 
     @throws[InternalObjectMapperException]
