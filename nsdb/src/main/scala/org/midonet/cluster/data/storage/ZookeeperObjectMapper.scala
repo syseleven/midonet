@@ -883,25 +883,22 @@ class ZookeeperObjectMapper(config: MidonetBackendConfig,
         val lock =
             if (!lockFree) new InterProcessSemaphoreMutex(curator, topologyLockPath)
             else null
-        if ((lock eq null) ||
-            lock.acquire(config.lockTimeoutMs, TimeUnit.MILLISECONDS)) {
-            try TransactionRetriable.retry(Log, "Transaction") {
-                val tx = transaction(owner)
-                try {
-                    val result = f(tx)
-                    tx.commit()
-                    result
-                } finally {
-                    tx.close()
-                }
+        TransactionRetriable.retry(Log, "Transaction") {
+            if ((lock ne null) && !lock.acquire(config.lockTimeoutMs, TimeUnit.MILLISECONDS)) {
+                throw new StorageException("Acquiring lock timed-out after " +
+                                           s"${config.lockTimeoutMs} ms")
+            }
+            val tx = transaction(owner)
+            try {
+                val result = f(tx)
+                tx.commit()
+                result
             } finally {
+                tx.close()
                 if ((lock ne null) && lock.isAcquiredInThisProcess) {
                     lock.release()
                 }
             }
-        } else {
-            throw new StorageException("Acquiring lock timed-out after " +
-                                       s"${config.lockTimeoutMs} ms")
         }
     }
 
