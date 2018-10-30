@@ -881,8 +881,8 @@ class ZookeeperObjectMapper(config: MidonetBackendConfig,
     @throws[StorageException]
     override def tryTransaction[R](owner: ZoomOwner)(f: (Transaction) => R): R = {
         val lock =
-        if (!lockFree) new InterProcessSemaphoreMutex(curator, topologyLockPath)
-        else null
+            if (!lockFree) new InterProcessSemaphoreMutex(curator, topologyLockPath)
+            else null
         TransactionRetriable.retry(Log, "Transaction") {
             if ((lock ne null) && !lock.acquire(config.lockTimeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new StorageException("Acquiring lock timed-out after " +
