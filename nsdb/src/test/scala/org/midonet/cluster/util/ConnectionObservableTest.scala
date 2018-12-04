@@ -34,8 +34,9 @@ class ConnectionObservableTest extends FlatSpec with CuratorTestFramework
 
     override protected val retryPolicy = new RetryOneTime(500)
 
-    override def cnxnTimeoutMs = 3000
-    override def sessionTimeoutMs = 10000
+    override def cnxnTimeoutMs = 1000
+    override def sessionTimeoutMs = 2000
+    override def tickTime = 500
     private val timeout = 5 second
 
     "Connection observable" should "emit initial connection state" in {

@@ -19,11 +19,12 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import scala.util.control.NonFatal
 
-import org.apache.curator.framework.CuratorFramework
+import org.apache.curator.framework.{CuratorFramework, WatcherRemoveCuratorFramework}
 import org.apache.curator.framework.api.{BackgroundCallback, CuratorEvent}
 import org.apache.curator.framework.recipes.cache.ChildData
 import org.apache.curator.framework.state.{ConnectionState, ConnectionStateListener}
 import org.apache.zookeeper.KeeperException.{Code, NoNodeException}
+import org.apache.zookeeper.Watcher.Event.EventType
 import org.apache.zookeeper.{WatchedEvent, Watcher}
 
 import rx.Observable.OnSubscribe
@@ -75,13 +76,14 @@ object NodeObservable {
                completeOnDelete: Boolean = true,
                onClose: => Unit = OnCloseDefault)
     : NodeObservable = {
-        new NodeObservable(new OnSubscribeToNode(curator, path, metrics,
+        new NodeObservable(new OnSubscribeToNode(curator.newWatcherRemoveCuratorFramework(),
+                                                 path, metrics,
                                                  completeOnDelete, onClose))
     }
 }
 
 private[util]
-class OnSubscribeToNode(curator: CuratorFramework, path: String,
+class OnSubscribeToNode(curator: WatcherRemoveCuratorFramework, path: String,
                         metrics: StorageMetrics,
                         completeOnDelete: Boolean,
                         onClose: => Unit)
@@ -106,8 +108,10 @@ class OnSubscribeToNode(curator: CuratorFramework, path: String,
     @volatile
     private var nodeWatcher = new Watcher {
         override def process(event: WatchedEvent): Unit = {
-            metrics.watchers.nodeTriggeredWatchers.inc()
-            processWatcher(event)
+            if (event.getType != EventType.DataWatchRemoved) {
+                metrics.watchers.nodeTriggeredWatchers.inc()
+                processWatcher(event)
+            }
         }
     }
 
@@ -261,7 +265,7 @@ class OnSubscribeToNode(curator: CuratorFramework, path: String,
     private def close(e: Throwable): Unit = {
         if (state.compareAndSet(State.Started, State.Closed)) {
             curator.getConnectionStateListenable.removeListener(connectionListener)
-            curator.clearWatcherReferences(nodeWatcher)
+            curator.removeWatchers()
 
             onClose
             if (e eq null) subject.onCompleted() else subject.onError(e)

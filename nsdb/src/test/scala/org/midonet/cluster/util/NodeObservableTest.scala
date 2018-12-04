@@ -213,9 +213,10 @@ class NodeObservableConnectionTest extends FlatSpec with CuratorTestFramework
     override protected val retryPolicy = new RetryOneTime(500)
 
     override def cnxnTimeoutMs = 3000
-    override def sessionTimeoutMs = 10000
+    override def sessionTimeoutMs = 6000
     private val timeout = 1 second
     private val metrics = new StorageMetrics(new MetricRegistry)
+    private val completionTimeout = 7 second
 
     "Node observable" should "emit error on losing connection" in {
         val path = makePath("1")
@@ -226,7 +227,7 @@ class NodeObservableConnectionTest extends FlatSpec with CuratorTestFramework
         obs1.awaitOnNext(1, timeout)
 
         zk.stop()      // This will send us the error after the cnxn times out
-        obs1.awaitCompletion(cnxnTimeoutMs * 2 millis)
+        obs1.awaitCompletion(completionTimeout)
 
         obs1.getOnCompletedEvents shouldBe empty
         obs1.getOnNextEvents should have size 1

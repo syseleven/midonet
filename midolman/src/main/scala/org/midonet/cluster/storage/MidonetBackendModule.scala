@@ -114,22 +114,5 @@ class MidonetBackendModule(val conf: MidonetBackendConfig,
     private def configureClientBuffer(): Unit = {
         // Try configure the buffer size using the system property.
         System.setProperty("jute.maxbuffer", Integer.toString(conf.bufferSize))
-        if (ClientCnxn.packetLen != conf.bufferSize) {
-            // If the static variable is already initialized, fallback to
-            // reflection.
-            try {
-                val field = classOf[ClientCnxn].getField("packetLen")
-                val modifiers = classOf[Field].getDeclaredField("modifiers")
-                modifiers.setAccessible(true)
-                modifiers.setInt(field, field.getModifiers & ~Modifier.FINAL)
-                field.setAccessible(true)
-                field.setInt(null, conf.bufferSize)
-            } catch {
-                case NonFatal(e) =>
-                    log.warn("Unable to set the buffer size to: " +
-                             s"${conf.bufferSize}, falling back to: " +
-                             s"${ClientCnxn.packetLen}")
-            }
-        }
     }
 }

@@ -17,7 +17,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 project.ext {
-    midonetVersion = "5.4.6-se4"
+    midonetVersion = "5.4.6-se4.1"
     vendor = 'MidoNet'
     maintainer = "MidoNet user list <midonet-user@midonet.org>"
     url = "http://midonet.org"
@@ -60,12 +60,12 @@ project.ext {
         commons_io: "commons-io:commons-io:2.3",
         commons_lang: "commons-lang:commons-lang:2.6",
         commons_lang3: "org.apache.commons:commons-lang3:3.3",
-        curator_discovery: "org.apache.curator:curator-x-discovery:2.9.1",
-        curator_framework: dependencies.create("org.apache.curator:curator-framework:2.9.1") {
+        curator_discovery: "org.apache.curator:curator-x-discovery:4.0.1",
+        curator_framework: dependencies.create("org.apache.curator:curator-framework:4.0.1") {
             exclude group: 'log4j', module: 'log4j'},
-        curator_recipes: dependencies.create("org.apache.curator:curator-recipes:2.9.1") {
+        curator_recipes: dependencies.create("org.apache.curator:curator-recipes:4.0.1") {
             exclude group: 'log4j', module: 'log4j'},
-        curator_test: "org.apache.curator:curator-test:2.9.1",
+        curator_test: "org.apache.curator:curator-test:4.0.1",
         disruptor: "com.lmax:disruptor:3.3.0",
         findbugs: "com.google.code.findbugs:jsr305:2.0.0",
         grizzly_servlet: "org.glassfish.grizzly:grizzly-http-servlet:2.1.2",
@@ -152,7 +152,7 @@ project.ext {
         validation: "javax.validation:validation-api:1.0.0.GA",
         vpp_core: project.files("midolman/jvpplib/jvpp-core-16.09.jar"),
         vpp_registry: project.files("midolman/jvpplib/jvpp-registry-16.09.jar"),
-        zookeeper: dependencies.create("org.apache.zookeeper:zookeeper:3.4.8") {
+        zookeeper: dependencies.create("org.apache.zookeeper:zookeeper:3.5.4-beta") {
             exclude group: 'jline', module: 'jline'
             exclude group: 'javax.jms', module: 'javax.jms'
             exclude group: 'com.sun.jdmk', module: 'jmxtools'

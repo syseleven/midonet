@@ -176,7 +176,7 @@ class ObservableNodeCacheConnectionTest extends Suite
     private val timeoutInSeconds = 5
 
     override def cnxnTimeoutMs = 3000
-    override def sessionTimeoutMs = 10000
+    override def sessionTimeoutMs = 6000
 
     def testLostConnectionTriggersError(): Unit = {
         val path = makePath("1")
@@ -188,7 +188,7 @@ class ObservableNodeCacheConnectionTest extends Suite
         assertTrue(ts.n.await(timeoutInSeconds, TimeUnit.SECONDS))
 
         zk.stop()      // This will send us the error after the cnxn times out
-        assertTrue(ts.e.await(cnxnTimeoutMs * 2, TimeUnit.MILLISECONDS))
+        assertTrue(ts.e.await(sessionTimeoutMs + 1000, TimeUnit.MILLISECONDS))
 
         ts.getOnCompletedEvents shouldBe empty
         ts.getOnNextEvents should have size 1

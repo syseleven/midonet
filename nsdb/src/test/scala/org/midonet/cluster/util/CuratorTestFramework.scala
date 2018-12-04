@@ -24,7 +24,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.RetryNTimes
-import org.apache.curator.test.TestingServer
+import org.apache.curator.test.{InstanceSpec, TestingServer}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
 import org.midonet.cluster.storage.MidonetBackendConfig
@@ -69,10 +69,14 @@ trait CuratorTestFramework extends BeforeAndAfterEach
     protected def cnxnTimeoutMs: Int = 10 * 1000
     protected def sessionTimeoutMs: Int = 10 * 1000
     protected def configParams = ""
+    protected def tickTime: Int = -1 // default TestingServer tickTime (3000 ms)
 
     override protected def beforeAll(): Unit = {
         super.beforeAll()
-        val ts = new TestingServer
+        val ts = new TestingServer(
+            new InstanceSpec(null, -1, -1, -1, true, -1, tickTime, -1),
+            true)
+
         testServers(this.getClass) = ts
         ts.start()
     }
