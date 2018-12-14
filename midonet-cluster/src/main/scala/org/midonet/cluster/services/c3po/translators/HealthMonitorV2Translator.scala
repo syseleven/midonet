@@ -17,15 +17,21 @@
 package org.midonet.cluster.services.c3po.translators
 
 import scala.collection.JavaConverters._
-
 import org.midonet.cluster.data.storage.Transaction
 import org.midonet.cluster.models.Commons.UUID
 import org.midonet.cluster.models.Neutron.NeutronHealthMonitorV2
-import org.midonet.cluster.models.Topology.HealthMonitor
+import org.midonet.cluster.models.Topology._
 import org.midonet.cluster.services.c3po.NeutronTranslatorManager.Operation
+import org.midonet.cluster.util.IPAddressUtil._
+import org.midonet.cluster.util.IPSubnetUtil._
+import org.midonet.cluster.util.{IPAddressUtil, IPSubnetUtil}
+import org.midonet.containers
+import org.midonet.packets.{IPv4Subnet, MAC}
 
 /** Provides a Neutron model translator for NeutronHealthMonitorV2. */
-class HealthMonitorV2Translator extends Translator[NeutronHealthMonitorV2] {
+class HealthMonitorV2Translator
+        extends Translator[NeutronHealthMonitorV2]
+        with LoadBalancerManager {
 
     override protected def retainHighLevelModel(tx: Transaction,
                                                 op: Operation[NeutronHealthMonitorV2])
@@ -34,10 +40,69 @@ class HealthMonitorV2Translator extends Translator[NeutronHealthMonitorV2] {
     override protected def translateCreate(tx: Transaction,
                                            nHm: NeutronHealthMonitorV2)
     : Unit = {
-        tx.create(convertHm(nHm))
+        val hm = convertHm(nHm)
+        tx.create(hm)
+
+        var lbs: Set[UUID] = Set()
+        for (poolId <- nHm.getPoolsList.asScala.map(_.getId) if tx.exists(classOf[Pool], poolId)) {
+            val pool = tx.get(classOf[Pool], poolId)
+            lbs += pool.getLoadBalancerId
+        }
+        for (loadBalancerId <- lbs if tx.exists(classOf[LoadBalancer], loadBalancerId)) {
+            val routerId = lbV2RouterId(loadBalancerId)
+            val serviceContainerId = lbServiceContainerId(routerId)
+
+            val subnet = containers.findLocalSubnet()
+            val routerAddress = containers.routerPortAddress(subnet)
+            val containerAddress = containers.containerPortAddress(subnet)
+            val routerSubnet = new IPv4Subnet(routerAddress, subnet.getPrefixLen)
+
+            val lb = tx.get(classOf[LoadBalancer], loadBalancerId).toBuilder
+              .setServiceContainerId(serviceContainerId)
+              .build()
+
+            val serviceContainerPort = Port.newBuilder
+              .setId(lbServiceContainerPortId(routerId))
+              .setRouterId(routerId)
+              .addPortSubnet(routerSubnet.asProto)
+              .setPortAddress(routerAddress.asProto)
+              .setPortMac(MAC.random().toString)
+              .build()
+
+            val serviceContainerGroup = ServiceContainerGroup.newBuilder
+              .setId(lbServiceContainerGroupId(routerId))
+              .build()
+
+            val serviceContainer = ServiceContainer.newBuilder
+              .setId(lbServiceContainerId(routerId))
+              .setServiceGroupId(serviceContainerGroup.getId)
+              .setPortId(serviceContainerPort.getId)
+              .setServiceType("HAPROXY")
+              .setConfigurationId(loadBalancerId)
+              .build()
+
+            val route = newNextHopPortRoute(
+                serviceContainerPort.getId,
+                dstSubnet = serviceContainerPort.getPortSubnet(0))
+
+            tx.create(serviceContainerPort)
+            tx.create(serviceContainerGroup)
+            tx.create(serviceContainer)
+            tx.create(route)
+            tx.update(lb)
+        }
     }
 
     override protected def translateDelete(tx: Transaction, id: UUID): Unit = {
+        if (tx.exists(classOf[HealthMonitor], id)) {
+            val hm = tx.get(classOf[HealthMonitor], id)
+            for (poolId <- hm.getPoolIdsList.asScala if tx.exists(classOf[Pool], poolId)) {
+                val pool = tx.get(classOf[Pool], poolId)
+                val routerId = lbV2RouterId(pool.getLoadBalancerId)
+                tx.delete(classOf[ServiceContainerGroup], lbServiceContainerGroupId(routerId), ignoresNeo = true)
+                tx.delete(classOf[Port], lbServiceContainerPortId(routerId), ignoresNeo = true)
+            }
+        }
         tx.delete(classOf[HealthMonitor], id, ignoresNeo = true)
     }
 

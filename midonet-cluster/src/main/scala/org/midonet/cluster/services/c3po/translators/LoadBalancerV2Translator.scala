@@ -50,11 +50,6 @@ class LoadBalancerV2Translator(config: ClusterConfig)
             throw new IllegalArgumentException(
                 "VIP port must be created and specified along with the VIP address.")
 
-        val subnet = containers.findLocalSubnet()
-        val routerAddress = containers.routerPortAddress(subnet)
-        val containerAddress = containers.containerPortAddress(subnet)
-        val routerSubnet = new IPv4Subnet(routerAddress, subnet.getPrefixLen)
-
         val newRouterId = lbV2RouterId(nLb.getId)
         val newRouterPortId = PortManager.routerInterfacePortPeerId(nLb.getVipPortId)
 
@@ -62,6 +57,11 @@ class LoadBalancerV2Translator(config: ClusterConfig)
         val oChainId = outChainId(newRouterId)
 
         val vipAddr = IPSubnetUtil.fromAddress(nLb.getVipAddress)
+
+        // subnet, address of the haproxy container. Even if we don't create the
+        // container here, we need its address for the snatRule
+        val subnet = containers.findLocalSubnet()
+        val containerAddress = containers.containerPortAddress(subnet)
         val containerAddr = IPSubnetUtil.fromAddress(containerAddress.toString)
 
         val snatRule = Rule.newBuilder
@@ -110,7 +110,6 @@ class LoadBalancerV2Translator(config: ClusterConfig)
             .setId(nLb.getId)
             .setAdminStateUp(nLb.getAdminStateUp)
             .setRouterId(newRouterId)
-            .setServiceContainerId(lbServiceContainerId(newRouterId))
             .build
 
         val dhcp = tx.get(classOf[Dhcp], nLb.getVipSubnetId)
@@ -130,35 +129,11 @@ class LoadBalancerV2Translator(config: ClusterConfig)
         val routes = ListBuffer(newNextHopPortRoute(
             newPort.getId, dstSubnet = newPort.getPortSubnet(0)))
 
-        val serviceContainerPort = Port.newBuilder
-            .setId(lbServiceContainerPortId(newRouter.getId))
-            .setRouterId(newRouter.getId)
-            .addPortSubnet(routerSubnet.asProto)
-            .setPortAddress(routerAddress.asProto)
-            .setPortMac(MAC.random().toString)
-            .build()
-
-        routes += newNextHopPortRoute(
-            serviceContainerPort.getId,
-            dstSubnet = serviceContainerPort.getPortSubnet(0))
-
         if (dhcp.hasDefaultGateway) {
             routes += defaultGwRoute(dhcp, newPort.getId,
                                      dhcp.getDefaultGateway)
         }
         routes ++= buildRouterRoutesFromDhcp(newPort.getId, dhcp)
-
-        val serviceContainerGroup = ServiceContainerGroup.newBuilder
-            .setId(lbServiceContainerGroupId(newRouterId))
-            .build()
-
-        val serviceContainer = ServiceContainer.newBuilder
-            .setId(lbServiceContainerId(newRouterId))
-            .setServiceGroupId(serviceContainerGroup.getId)
-            .setPortId(serviceContainerPort.getId)
-            .setServiceType("HAPROXY")
-            .setConfigurationId(lb.getId)
-            .build()
 
         tx.create(snatRule)
         tx.create(revSnatRule)
@@ -167,9 +142,6 @@ class LoadBalancerV2Translator(config: ClusterConfig)
         tx.create(newRouter)
         tx.create(lb)
         tx.create(newPort)
-        tx.create(serviceContainerPort)
-        tx.create(serviceContainerGroup)
-        tx.create(serviceContainer)
         routes foreach tx.create
     }
 
