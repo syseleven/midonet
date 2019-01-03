@@ -98,9 +98,16 @@ class HealthMonitorV2Translator
             val hm = tx.get(classOf[HealthMonitor], id)
             for (poolId <- hm.getPoolIdsList.asScala if tx.exists(classOf[Pool], poolId)) {
                 val pool = tx.get(classOf[Pool], poolId)
-                val routerId = lbV2RouterId(pool.getLoadBalancerId)
+                val loadBalancerId = pool.getLoadBalancerId
+                val routerId = lbV2RouterId(loadBalancerId)
                 tx.delete(classOf[ServiceContainerGroup], lbServiceContainerGroupId(routerId), ignoresNeo = true)
                 tx.delete(classOf[Port], lbServiceContainerPortId(routerId), ignoresNeo = true)
+                if (tx.exists(classOf[LoadBalancer], loadBalancerId)) {
+                    val lb = tx.get(classOf[LoadBalancer], loadBalancerId).toBuilder
+                      .clearServiceContainerId()
+                      .build()
+                    tx.update(lb)
+                }
             }
         }
         tx.delete(classOf[HealthMonitor], id, ignoresNeo = true)
