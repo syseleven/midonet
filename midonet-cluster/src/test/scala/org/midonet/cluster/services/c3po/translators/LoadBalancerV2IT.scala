@@ -78,7 +78,8 @@ class LoadBalancerV2IT extends C3POMinionTestBase
         lb.getId shouldBe toProto(lbId)
         lb.getAdminStateUp shouldBe true
         lb.getRouterId shouldBe toProto(routerId)
-        lb.getServiceContainerId shouldBe toProto(lbServiceContainerId(routerId))
+        // serviceContainerId will be set when HealthMonitor is added
+        lb.hasServiceContainerId shouldBe false
 
         val router = storage.get(classOf[Router], routerId).await()
         router.getLoadBalancerId shouldBe toProto(lbId)
@@ -111,25 +112,9 @@ class LoadBalancerV2IT extends C3POMinionTestBase
         val lbSCGId = lbServiceContainerGroupId(routerId)
         val lbSCPId = lbServiceContainerPortId(routerId)
 
-        val sc = storage.get(classOf[ServiceContainer], lbSCId).await()
-        sc.getPortId shouldBe toProto(lbSCPId)
-        sc.getConfigurationId shouldBe toProto(lb.getId)
-        sc.getServiceGroupId shouldBe toProto(lbSCGId)
-        sc.getServiceType shouldBe "HAPROXY"
-
-        val scg = storage.get(classOf[ServiceContainerGroup], lbSCGId).await()
-        scg.getServiceContainerIdsList should contain only lbSCId
-
-        val scp = storage.get(classOf[Port], lbSCPId).await()
-        scp.getRouterId shouldBe routerId
-        scp.hasPortMac shouldBe true
-        scp.hasPortAddress shouldBe true
-        scp.getPortSubnetCount shouldBe 1
-        scp.getAdminStateUp shouldBe true
-
         val routes = storage.getAll(classOf[Route]).await()
-        routes.size shouldBe 3
-        val expectedNHP = List(vipPeerPortId, vipPeerPortId, scp.getId)
+        routes.size shouldBe 2
+        val expectedNHP = List(vipPeerPortId, vipPeerPortId)
         routes.map(_.getNextHopPortId).toList should contain theSameElementsAs expectedNHP
 
         insertDeleteTask(50, LoadBalancerV2Type, lbId)
@@ -140,9 +125,6 @@ class LoadBalancerV2IT extends C3POMinionTestBase
         storage.exists(classOf[Rule], lbSnatRule(routerId)).await() shouldBe false
         storage.exists(classOf[Rule], lbRevSnatRule(routerId)).await() shouldBe false
         storage.exists(classOf[Port], vipPeerPortId).await() shouldBe false
-        storage.exists(classOf[ServiceContainer], lbSCId).await() shouldBe false
-        storage.exists(classOf[ServiceContainerGroup], lbSCGId).await() shouldBe false
-        storage.exists(classOf[Port], lbSCPId).await() shouldBe false
 
         routes.map(_.getId).foreach(storage.exists(classOf[Route], _).await() shouldBe false)
     }
