@@ -19,30 +19,25 @@ package org.midonet.midolman.flows
 import java.util.ArrayDeque
 
 import scala.concurrent.duration._
-
 import org.midonet.midolman.logging.MidolmanLogging
 import org.midonet.packets.{FlowStateStore => FlowState}
 import org.midonet.midolman.FlowTablePreallocation
+import org.midonet.midolman.config.MidolmanConfig
 
 object FlowExpirationIndexer {
     sealed abstract class Expiration {
-        def value: Long
         val typeId: Int
     }
     object ERROR_CONDITION_EXPIRATION extends Expiration {
-        val value = (5 seconds).toNanos
         val typeId = 0
     }
     object FLOW_EXPIRATION extends Expiration {
-        var value = (1 minutes).toNanos
         val typeId = 1
     }
     object STATEFUL_FLOW_EXPIRATION extends Expiration {
-        val value = FlowState.DEFAULT_EXPIRATION.toNanos / 2
         val typeId = 2
     }
     object TUNNEL_FLOW_EXPIRATION extends Expiration {
-        def value = FLOW_EXPIRATION.value * 5
         val typeId = 3
     }
 
@@ -75,9 +70,16 @@ object FlowExpirationIndexer {
  * but it is still kept in these data structures until it expires. This is to
  * avoid linear remove operations or smarter, more expensive data structures.
  */
-class FlowExpirationIndexer(preallocation: FlowTablePreallocation)
+class FlowExpirationIndexer(config: MidolmanConfig, preallocation: FlowTablePreallocation)
         extends MidolmanLogging {
     import FlowExpirationIndexer._
+
+    def expirationInterval(expiration: Expiration) : Long = expiration match {
+        case ERROR_CONDITION_EXPIRATION => (5 seconds).toNanos
+        case FLOW_EXPIRATION => (1 minutes).toNanos
+        case STATEFUL_FLOW_EXPIRATION => FlowState.DEFAULT_EXPIRATION.toNanos / 2
+        case TUNNEL_FLOW_EXPIRATION => (5 minutes).toNanos // FLOW_EXPIRATION * 5
+    }
 
     private val expirationQueues = new Array[ExpirationQueue](maxType)
 
@@ -93,9 +95,9 @@ class FlowExpirationIndexer(preallocation: FlowTablePreallocation)
     }
 
     def enqueueFlowExpiration(flowId: ManagedFlow.FlowId,
-                            expiration: Long,
-                            expirationType: Int): Unit = {
-        expirationQueues(expirationType).add(flowId, expiration)
+                              now: Long,
+                              expiration: Expiration): Unit = {
+        expirationQueues(expiration.typeId).add(flowId, expirationInterval(expiration))
     }
 
     def pollForExpired(now: Long): ManagedFlow.FlowId = {
