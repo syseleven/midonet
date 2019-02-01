@@ -74,11 +74,13 @@ class FlowExpirationIndexer(config: MidolmanConfig, preallocation: FlowTablePrea
         extends MidolmanLogging {
     import FlowExpirationIndexer._
 
+    val flowExpirationDuration = config.flowExpirationTime seconds
+
     def expirationInterval(expiration: Expiration) : Long = expiration match {
         case ERROR_CONDITION_EXPIRATION => (5 seconds).toNanos
-        case FLOW_EXPIRATION => (1 minutes).toNanos
-        case STATEFUL_FLOW_EXPIRATION => FlowState.DEFAULT_EXPIRATION.toNanos / 2
-        case TUNNEL_FLOW_EXPIRATION => (5 minutes).toNanos // FLOW_EXPIRATION * 5
+        case FLOW_EXPIRATION => flowExpirationDuration.toNanos
+        case STATEFUL_FLOW_EXPIRATION => flowExpirationDuration.toNanos / 2
+        case TUNNEL_FLOW_EXPIRATION => flowExpirationDuration.toNanos * 5
     }
 
     private val expirationQueues = new Array[ExpirationQueue](maxType)
