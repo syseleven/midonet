@@ -34,19 +34,20 @@ class FlowExpirationIndexerTest extends MidolmanSpec {
     val preallocation = new MockFlowTablePreallocation(MidolmanConfig.forTests) {
         override val maxFlows = 4
     }
-    val flowExpiration = new FlowExpirationIndexer(preallocation)
+    val flowExpiration = new FlowExpirationIndexer(MidolmanConfig.forTests, preallocation)
     val random = new Random
 
     feature ("Flows are expired with a hard timeout") {
 
         scenario ("A flow is removed upon a hard timeout") {
             val flow = createFlow(FlowExpirationIndexer.FLOW_EXPIRATION)
+            val interval = flowExpiration.expirationInterval(FlowExpirationIndexer.FLOW_EXPIRATION)
             flowExpiration.enqueueFlowExpiration(
-                flow.id, flow.absoluteExpirationNanos, flow.expirationType)
+                flow.id, flow.absoluteResetTimeNanos, flow.expiration)
             flow.currentRefCount should be (0)
-            clock.time = FlowExpirationIndexer.FLOW_EXPIRATION.value - 1
+            clock.time = interval - 1
             flowExpiration.pollForExpired(clock.tick) shouldBe NoFlow
-            clock.time = FlowExpirationIndexer.FLOW_EXPIRATION.value
+            clock.time = interval
             flowExpiration.pollForExpired(clock.tick) shouldBe flow.id
             flowExpiration.pollForExpired(clock.tick) shouldBe NoFlow
             flow.currentRefCount should be (0)
@@ -58,13 +59,13 @@ class FlowExpirationIndexerTest extends MidolmanSpec {
             val flow3 = createFlow(FlowExpirationIndexer.STATEFUL_FLOW_EXPIRATION)
             val flow4 = createFlow(FlowExpirationIndexer.TUNNEL_FLOW_EXPIRATION)
             flowExpiration.enqueueFlowExpiration(
-                flow1.id, flow1.absoluteExpirationNanos, flow1.expirationType)
+                flow1.id, flow1.absoluteResetTimeNanos, flow1.expiration)
             flowExpiration.enqueueFlowExpiration(
-                flow2.id, flow2.absoluteExpirationNanos, flow2.expirationType)
+                flow2.id, flow2.absoluteResetTimeNanos, flow2.expiration)
             flowExpiration.enqueueFlowExpiration(
-                flow3.id, flow3.absoluteExpirationNanos, flow3.expirationType)
+                flow3.id, flow3.absoluteResetTimeNanos, flow3.expiration)
             flowExpiration.enqueueFlowExpiration(
-                flow4.id, flow4.absoluteExpirationNanos, flow4.expirationType)
+                flow4.id, flow4.absoluteResetTimeNanos, flow4.expiration)
 
             clock.time = Long.MaxValue
             flowExpiration.pollForExpired(clock.tick) should not be (NoFlow)
@@ -87,7 +88,7 @@ class FlowExpirationIndexerTest extends MidolmanSpec {
                 createFlow(FlowExpirationIndexer.FLOW_EXPIRATION))
             flows foreach { f =>
                 flowExpiration.enqueueFlowExpiration(
-                    f.id, f.absoluteExpirationNanos, f.expirationType)
+                    f.id, f.absoluteResetTimeNanos, f.expiration)
             }
             flowExpiration.pollForExpired(clock.tick) shouldBe flows(0).id
             flowExpiration.pollForExpired(clock.tick) shouldBe flows(1).id
@@ -97,8 +98,8 @@ class FlowExpirationIndexerTest extends MidolmanSpec {
 
     private def createFlow(exp: FlowExpirationIndexer.Expiration) = {
         val flow = new ManagedFlowImpl(null)
-        flow.absoluteExpirationNanos = exp.value
-        flow.expirationType = exp.typeId
+        flow.absoluteResetTimeNanos = 0L
+        flow.expiration = exp
         flow.setId(Math.abs(random.nextLong))
         flow
     }

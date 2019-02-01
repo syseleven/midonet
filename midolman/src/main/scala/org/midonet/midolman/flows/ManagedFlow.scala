@@ -53,8 +53,9 @@ final class ManagedFlowImpl(override val pool: ObjectPool[ManagedFlowImpl])
     val callbacks = new ArrayList[Callback0]()
     val tags = new ArrayList[FlowTag]
     override val flowMatch = new FlowMatch()
-    var expirationType = 0
-    var absoluteExpirationNanos = 0L
+    var expiration: Expiration = FlowExpirationIndexer.FLOW_EXPIRATION
+    // when was the flow reset? In nanoseconds, based on NanoClock tick.
+    var absoluteResetTimeNanos = 0L
     // To synchronize create operation with delete operations
     var _sequence = 0L
     // To access this object from a netlink sequence number, used for duplicate detection
@@ -67,11 +68,11 @@ final class ManagedFlowImpl(override val pool: ObjectPool[ManagedFlowImpl])
 
     def reset(flowMatch: FlowMatch, flowTags: ArrayList[FlowTag],
               flowRemovedCallbacks: ArrayList[Callback0], sequence: Long,
-              expiration: Expiration, now: Long,
+              exp: Expiration, now: Long,
               linkedFlow: ManagedFlowImpl = null): Unit = {
         this.flowMatch.resetWithoutIcmpData(flowMatch)
-        expirationType = expiration.typeId
-        absoluteExpirationNanos = now + expiration.value
+        expiration = exp
+        absoluteResetTimeNanos = now
         ArrayListUtil.addAll(flowTags, tags)
         ArrayListUtil.addAll(flowRemovedCallbacks, callbacks)
         this._sequence = sequence
