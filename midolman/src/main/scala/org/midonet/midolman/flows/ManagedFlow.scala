@@ -54,6 +54,7 @@ final class ManagedFlowImpl(override val pool: ObjectPool[ManagedFlowImpl])
     val tags = new ArrayList[FlowTag]
     override val flowMatch = new FlowMatch()
     var expiration: Expiration = FlowExpirationIndexer.FLOW_EXPIRATION
+    // when was the flow reset? In nanoseconds, based on NanoClock tick.
     var absoluteResetTimeNanos = 0L
     // To synchronize create operation with delete operations
     var _sequence = 0L

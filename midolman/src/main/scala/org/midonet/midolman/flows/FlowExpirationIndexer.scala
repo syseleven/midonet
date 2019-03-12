@@ -99,7 +99,7 @@ class FlowExpirationIndexer(config: MidolmanConfig, preallocation: FlowTablePrea
     def enqueueFlowExpiration(flowId: ManagedFlow.FlowId,
                               now: Long,
                               expiration: Expiration): Unit = {
-        expirationQueues(expiration.typeId).add(flowId, expirationInterval(expiration))
+        expirationQueues(expiration.typeId).add(flowId, now + expirationInterval(expiration))
     }
 
     def pollForExpired(now: Long): ManagedFlow.FlowId = {
