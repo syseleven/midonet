@@ -127,6 +127,8 @@ trait MidolmanServices {
         override def invalidateFlowsFor(tag: FlowTag) = tags = tags :+ tag
         override def recordPacket(packetLen: Int,
                                   tags: ArrayList[FlowTag]): Unit = {}
+
+        override def expirationInterval(expiration: Expiration): Long = 1
     }
 
     def dpConn()(implicit ec: ExecutionContext, as: ActorSystem):

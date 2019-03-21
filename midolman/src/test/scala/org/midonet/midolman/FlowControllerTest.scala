@@ -125,7 +125,7 @@ class FlowControllerTest extends MidolmanSpec {
             managedFlow.currentRefCount should be (1)
 
             When("We expire the flow")
-            clock.time = FlowExpirationIndexer.FLOW_EXPIRATION.value + 1
+            clock.time = flowController.expirationInterval(FlowExpirationIndexer.FLOW_EXPIRATION) + 1
             flowController.process()
 
             Then("The datapath flow metric should be set at the original value")
@@ -169,7 +169,7 @@ class FlowControllerTest extends MidolmanSpec {
             managedFlow.currentRefCount should be (1)
 
             When("We expire the flow")
-            clock.time = FlowExpirationIndexer.FLOW_EXPIRATION.value + 1
+            clock.time = flowController.expirationInterval(FlowExpirationIndexer.FLOW_EXPIRATION) + 1
             flowController.process()
 
             Then("Nothing should happen, expiration doesn't keep refs")

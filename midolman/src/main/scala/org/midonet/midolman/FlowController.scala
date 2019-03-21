@@ -124,6 +124,7 @@ trait FlowController extends DisruptorBackChannel {
 
     def invalidateFlowsFor(tag: FlowTag): Unit
     def recordPacket(packetLen: Int, tags: ArrayList[FlowTag]): Unit
+    def expirationInterval(expiration: Expiration): Long
 }
 
 class FlowControllerImpl(config: MidolmanConfig,
@@ -148,7 +149,7 @@ class FlowControllerImpl(config: MidolmanConfig,
 
     private val managedFlowPool = preallocation.takeManagedFlowPool()
     private val tagIndexer = new FlowTagIndexer
-    private val expirationIndexer = new FlowExpirationIndexer(preallocation)
+    private val expirationIndexer = new FlowExpirationIndexer(config, preallocation)
 
     private val oversubscriptionFlowPool = new NoOpPool[ManagedFlowImpl](
         new ManagedFlowImpl(_))
@@ -238,13 +239,13 @@ class FlowControllerImpl(config: MidolmanConfig,
     private def registerFlow(flow: ManagedFlowImpl): Unit = {
         indexFlow(flow)
         expirationIndexer.enqueueFlowExpiration(flow.id,
-                                                flow.absoluteExpirationNanos,
-                                                flow.expirationType)
+                                                flow.absoluteResetTimeNanos,
+                                                flow.expiration)
         tagIndexer.indexFlowTags(flow)
 
         meters.trackFlow(flow.flowMatch, flow.tags)
         insights.flowAdded(flow.flowMatch, flow.tags,
-                           flow.absoluteExpirationNanos)
+                           flow.absoluteResetTimeNanos)
         var flowsAdded = 1
         if (flow.linkedFlow ne null) {
             indexFlow(flow.linkedFlow)
@@ -392,4 +393,6 @@ class FlowControllerImpl(config: MidolmanConfig,
 
     override def recordPacket(packetLen: Int, tags: ArrayList[FlowTag]): Unit =
         meters.recordPacket(packetLen, tags)
+
+    override def expirationInterval(expiration: Expiration): Long = expirationIndexer.expirationInterval(expiration)
 }
