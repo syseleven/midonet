@@ -47,25 +47,75 @@ class ContainerCommonsTest extends FlatSpec with Matchers with GivenWhenThen {
         }
     }
 
-    "Container commons" should "write to file" in {
+    "Container commons" should "write to new file" in {
         Given("A container")
         val container = new TestContainer
 
         And("A file name")
         val path = s"${FileUtils.getTempDirectory}/${UUID.randomUUID}"
 
+        And("The file does not exist yet")
+        val file = new File(path)
+        file.exists() shouldBe false
+
         When("Writing to the file")
-        container.writeFile("test-line1\ntest-line2", path)
+        container.writeFile("test-line1\ntest-line2", path) shouldBe true
 
         Then("The file should be created")
-        val file = new File(path)
         file.exists() shouldBe true
 
-        And("The file should contain the conte nt")
+        And("The file should contain the content")
         val lines = FileUtils.readLines(file)
         lines.size() shouldBe 2
         lines.get(0) shouldBe "test-line1"
         lines.get(1) shouldBe "test-line2"
+
+        FileUtils.forceDelete(file)
+    }
+
+    "Container commons" should "write to existing file" in {
+        Given("A container")
+        val container = new TestContainer
+
+        And("A file name")
+        val path = s"${FileUtils.getTempDirectory}/${UUID.randomUUID}"
+
+        And("The file already exists")
+        container.writeFile("test-line1\ntest-line2", path) shouldBe true
+        val file = new File(path)
+        file.exists() shouldBe true
+
+        When("Writing to the file does not result in a change")
+        val result = container.writeFile("test-line1\ntest-line2", path)
+
+        Then("writeFile should return false")
+        result shouldBe false
+
+        FileUtils.forceDelete(file)
+    }
+
+    "Container commons" should "write to existing file with change" in {
+        Given("A container")
+        val container = new TestContainer
+
+        And("A file name")
+        val path = s"${FileUtils.getTempDirectory}/${UUID.randomUUID}"
+
+        And("The file already exists")
+        container.writeFile("test-line1\ntest-line2", path) shouldBe true
+        val file = new File(path)
+        file.exists() shouldBe true
+
+        When("Writing to the file does result in a change")
+        val result = container.writeFile("newcontent", path)
+
+        Then("writeFile should return true")
+        result shouldBe true
+
+        And("The file should contain the content")
+        val lines = FileUtils.readLines(file)
+        lines.size() shouldBe 1
+        lines.get(0) shouldBe "newcontent"
 
         FileUtils.forceDelete(file)
     }

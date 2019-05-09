@@ -57,10 +57,10 @@ class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
         }
     }
 
-    def writeConfFile(lbV2Config: LoadBalancerV2Config): Unit = {
+    def writeConfFile(lbV2Config: LoadBalancerV2Config): Boolean = {
         ensureConfDir(lbV2Config)
         val contents = lbV2Config.generateConfigFile(sockLoc)
-        writeFile(contents, confLoc)
+        return writeFile(contents, confLoc)
     }
 
     def deploy(lbV2Config: LoadBalancerV2Config, ifaceName: String,
@@ -71,12 +71,18 @@ class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
         executeCommands(Seq((makensCmd, cleannsCmd)))
 
         // restartHaproxy will just start haproxy if its not already running.
-        restart(lbV2Config)
+        restart(lbV2Config, true)
     }
 
     def restart(lbV2Config: LoadBalancerV2Config): Unit = {
-        writeConfFile(lbV2Config)
-        execute(restartHaproxyStr(namespaceName(lbV2Config.id.toString)))
+        restart(lbV2Config, false)
+    }
+
+    def restart(lbV2Config: LoadBalancerV2Config, force: Boolean): Unit = {
+        val configDidChange = writeConfFile(lbV2Config)
+        if (force || configDidChange) {
+            execute(restartHaproxyStr(namespaceName(lbV2Config.id.toString)))
+        }
     }
 
     def undeploy(name: String, iface: String): Unit = {

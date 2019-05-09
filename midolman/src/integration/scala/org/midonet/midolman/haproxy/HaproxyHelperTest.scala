@@ -183,6 +183,36 @@ class HaproxyHelperTest extends FeatureSpec
             }
         }
 
+        scenario("does not restart haproxy if config did not actually change") {
+            val ifaceName = "iface"
+            val nsName = namespaceName(lb1.id.toString)
+            val haproxy = new HaproxyHelper(haproxyScript)
+            try {
+                haproxy.deploy(lb1, ifaceName, "20.0.0.1", "20.0.0.2")
+                verifyIpNetns(nsName, ifaceName)
+                verifyHaproxyRunning(nsName)
+                verifyConfFile(lb1, haproxy.confLoc)
+                verifyStatus(haproxy, lb1)
+
+                val oldPid = s"ip netns pids $nsName".!!
+
+                haproxy.restart(lb1)
+
+                verifyIpNetns(nsName, ifaceName)
+                verifyHaproxyRunning(nsName)
+                verifyConfFile(lb1, haproxy.confLoc)
+                verifyStatus(haproxy, lb1)
+
+                val newPid = s"ip netns pids $nsName".!!
+
+                // verify haproxy did not actually restart because config did not change
+                newPid shouldEqual oldPid
+            } finally {
+                haproxy.undeploy(nsName, ifaceName)
+                verifyNoIpNetns(nsName, ifaceName)
+            }
+        }
+
         scenario("multiple pools per load balancer") {
             val name = namespaceName(lb1.id.toString)
             val ifaceName = "iface1"

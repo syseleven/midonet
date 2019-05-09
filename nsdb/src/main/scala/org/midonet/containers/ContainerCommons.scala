@@ -33,15 +33,30 @@ trait ContainerCommons extends Logging {
       * Writes the specified string in a text file at the given path.
       */
     @throws[IOException]
-    def writeFile(contents: String, path: String): Unit = {
-        val file = new File(path)
-        file.getParentFile.mkdirs()
-        val writer = new PrintWriter(file, "UTF-8")
+    def writeFile(contents: String, path: String): Boolean = {
+        var hasChanged = false
+
         try {
-            writer.print(contents)
-        } finally {
-            writer.close()
+            val oldConfig = scala.io.Source.fromFile(path)
+            val oldContents = try oldConfig.mkString finally oldConfig.close()
+            hasChanged = oldContents != contents
+        } catch {
+            case e: FileNotFoundException =>
+                hasChanged = true
         }
+
+        if (hasChanged) {
+            val file = new File(path)
+            file.getParentFile.mkdirs()
+            val writer = new PrintWriter(file, "UTF-8")
+            try {
+                writer.print(contents)
+            } finally {
+                writer.close()
+            }
+        }
+
+        return hasChanged
     }
 
     /**

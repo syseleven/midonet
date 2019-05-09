@@ -67,7 +67,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
             if (commands.size == throwOn) throw new Exception()
             if (commands.size == failOn) (-1, "") else (0, "")
         }
-        override def writeFile(contents: String, location: String): Unit = { }
+        override def writeFile(contents: String, location: String): Boolean = true
     }
 
     private val random = new Random
