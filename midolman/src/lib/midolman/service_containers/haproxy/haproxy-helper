@@ -51,6 +51,7 @@ makens() {
 
 restart_ha() {
     # Kill every process running in the namespace
+    echo "show servers state" | nc -U $SOCK > $SERVER_STATE
     for pid in $(ip netns pids $NAME)
     do
         kill -9 $pid
@@ -114,9 +115,11 @@ case $ACTION in
     restart_ha)
         NAME=$1
         CONF=$2
-        if [ "$#" -ne 2 ]; then
-            echo "expected 3 arguments, but $(($# + 1)) supplied"
-            echo "$0 restart_ha NAME CONF_FILE"
+        SOCK=$3
+        SERVER_STATE=$4
+        if [ "$#" -ne 4 ]; then
+            echo "expected 4 arguments, but $(($# + 1)) supplied"
+            echo "$0 restart_ha NAME CONF_FILE SOCK_FILE SERVER_STATE_FILE"
             exit 1
         fi
         restart_ha

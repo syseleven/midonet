@@ -25,6 +25,7 @@ object HaproxyHelper {
     def namespaceName(id: String) = s"hm-${id.substring(0, 8)}"
     def confLocation(path: String) = s"$path/conf"
     def sockLocation(path: String) = s"$path/sock"
+    def stateLocation(path: String) = s"$path/state"
 }
 
 class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
@@ -35,6 +36,7 @@ class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
 
     var confLoc: String = _
     var sockLoc: String = _
+    var stateLoc: String = _
 
     private def makensStr(name: String, iface: String, ip: String,
                           routerIp: String) = {
@@ -46,7 +48,7 @@ class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
     }
 
     private def restartHaproxyStr(name: String) = {
-        s"$haproxyScript restart_ha $name $confLoc"
+        s"$haproxyScript restart_ha $name $confLoc $sockLoc $stateLoc"
     }
 
     private def ensureConfDir(lbV2Config: LoadBalancerV2Config): Unit = {
@@ -54,12 +56,13 @@ class HaproxyHelper(haproxyScript: String = "/usr/lib/midolman/haproxy-helper")
             val haproxyPath = Files.createTempDirectory(lbV2Config.id.toString)
             confLoc = confLocation(haproxyPath.toString)
             sockLoc = sockLocation(haproxyPath.toString)
+            stateLoc = stateLocation(haproxyPath.toString)
         }
     }
 
     def writeConfFile(lbV2Config: LoadBalancerV2Config): Unit = {
         ensureConfDir(lbV2Config)
-        val contents = lbV2Config.generateConfigFile(sockLoc)
+        val contents = lbV2Config.generateConfigFile(sockLoc, stateLoc)
         writeFile(contents, confLoc)
     }
 
