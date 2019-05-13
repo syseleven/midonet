@@ -50,8 +50,10 @@ makens() {
 }
 
 restart_ha() {
-    # Kill every process running in the namespace
+    # Eliminate downtime by transferring the server state from the currently running instance.
+    # If haproxy is not running for some reason, the state file will be empty. HAProxy is fine with that.
     echo "show servers state" | nc -U $SOCK > $SERVER_STATE
+    # Kill every process running in the namespace
     for pid in $(ip netns pids $NAME)
     do
         kill -9 $pid
