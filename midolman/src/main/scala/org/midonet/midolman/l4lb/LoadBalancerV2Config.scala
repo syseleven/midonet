@@ -36,7 +36,7 @@ case class LoadBalancerV2Config(id: UUID,
                                 pools: Set[PoolV2Config],
                                 adminStateUp: Boolean) {
 
-    def generateConfigFile(sockFile: String): String = {
+    def generateConfigFile(sockFile: String, stateFile: String): String = {
         val conf = new StringBuilder()
         conf append
             s"""
@@ -47,12 +47,14 @@ case class LoadBalancerV2Config(id: UUID,
                 |    log /dev/log local0
                 |    log /dev/log local1 notice
                 |    stats socket $sockFile mode 0666 level user
+                |    server-state-file $stateFile
                 |defaults
                 |    log global
                 |    retries 3
                 |    timeout connect 5000
                 |    timeout client 5000
                 |    timeout server 5000
+                |    load-server-state-from-file global
                 |""".stripMargin
 
         vips filter (_.adminStateUp) foreach { v =>
