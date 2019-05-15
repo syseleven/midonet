@@ -52,45 +52,57 @@ class HealthMonitorV2Translator
             val routerId = lbV2RouterId(loadBalancerId)
             val serviceContainerId = lbServiceContainerId(routerId)
 
-            val subnet = containers.findLocalSubnet()
-            val routerAddress = containers.routerPortAddress(subnet)
-            val containerAddress = containers.containerPortAddress(subnet)
-            val routerSubnet = new IPv4Subnet(routerAddress, subnet.getPrefixLen)
+            if (!tx.exists(classOf[ServiceContainer], serviceContainerId)) {
+                val subnet = containers.findLocalSubnet()
+                val routerAddress = containers.routerPortAddress(subnet)
+                val containerAddress = containers.containerPortAddress(subnet)
+                val routerSubnet = new IPv4Subnet(routerAddress, subnet.getPrefixLen)
 
-            val lb = tx.get(classOf[LoadBalancer], loadBalancerId).toBuilder
-              .setServiceContainerId(serviceContainerId)
-              .build()
+                val lb = tx.get(classOf[LoadBalancer], loadBalancerId).toBuilder
+                  .setServiceContainerId(serviceContainerId)
+                  .build()
 
-            val serviceContainerPort = Port.newBuilder
-              .setId(lbServiceContainerPortId(routerId))
-              .setRouterId(routerId)
-              .addPortSubnet(routerSubnet.asProto)
-              .setPortAddress(routerAddress.asProto)
-              .setPortMac(MAC.random().toString)
-              .build()
+                val serviceContainerPort = Port.newBuilder
+                  .setId(lbServiceContainerPortId(routerId))
+                  .setRouterId(routerId)
+                  .addPortSubnet(routerSubnet.asProto)
+                  .setPortAddress(routerAddress.asProto)
+                  .setPortMac(MAC.random().toString)
+                  .build()
 
-            val serviceContainerGroup = ServiceContainerGroup.newBuilder
-              .setId(lbServiceContainerGroupId(routerId))
-              .build()
+                val serviceContainerGroup = ServiceContainerGroup.newBuilder
+                  .setId(lbServiceContainerGroupId(routerId))
+                  .build()
 
-            val serviceContainer = ServiceContainer.newBuilder
-              .setId(lbServiceContainerId(routerId))
-              .setServiceGroupId(serviceContainerGroup.getId)
-              .setPortId(serviceContainerPort.getId)
-              .setServiceType("HAPROXY")
-              .setConfigurationId(loadBalancerId)
-              .build()
+                val serviceContainer = ServiceContainer.newBuilder
+                  .setId(lbServiceContainerId(routerId))
+                  .setServiceGroupId(serviceContainerGroup.getId)
+                  .setPortId(serviceContainerPort.getId)
+                  .setServiceType("HAPROXY")
+                  .setConfigurationId(loadBalancerId)
+                  .build()
 
-            val route = newNextHopPortRoute(
-                serviceContainerPort.getId,
-                dstSubnet = serviceContainerPort.getPortSubnet(0))
+                val route = newNextHopPortRoute(
+                    serviceContainerPort.getId,
+                    dstSubnet = serviceContainerPort.getPortSubnet(0))
 
-            tx.create(serviceContainerPort)
-            tx.create(serviceContainerGroup)
-            tx.create(serviceContainer)
-            tx.create(route)
-            tx.update(lb)
+                tx.create(serviceContainerPort)
+                tx.create(serviceContainerGroup)
+                tx.create(serviceContainer)
+                tx.create(route)
+                tx.update(lb)
+            }
         }
+    }
+
+    private def lbHasOtherHealthMonitor(tx: Transaction, lb: LoadBalancer, healthMonitorId: UUID): Boolean = {
+        for (poolId <- lb.getPoolIdsList.asScala if tx.exists(classOf[Pool], poolId)) {
+            val pool = tx.get(classOf[Pool], poolId)
+            if (pool.hasHealthMonitorId && pool.getHealthMonitorId != healthMonitorId) {
+                return true
+            }
+        }
+        false
     }
 
     override protected def translateDelete(tx: Transaction, id: UUID): Unit = {
@@ -99,14 +111,18 @@ class HealthMonitorV2Translator
             for (poolId <- hm.getPoolIdsList.asScala if tx.exists(classOf[Pool], poolId)) {
                 val pool = tx.get(classOf[Pool], poolId)
                 val loadBalancerId = pool.getLoadBalancerId
-                val routerId = lbV2RouterId(loadBalancerId)
-                tx.delete(classOf[ServiceContainerGroup], lbServiceContainerGroupId(routerId), ignoresNeo = true)
-                tx.delete(classOf[Port], lbServiceContainerPortId(routerId), ignoresNeo = true)
+
                 if (tx.exists(classOf[LoadBalancer], loadBalancerId)) {
-                    val lb = tx.get(classOf[LoadBalancer], loadBalancerId).toBuilder
-                      .clearServiceContainerId()
-                      .build()
-                    tx.update(lb)
+                    val lb = tx.get(classOf[LoadBalancer], loadBalancerId)
+
+                    if (!lbHasOtherHealthMonitor(tx, lb, id)) {
+                        val routerId = lbV2RouterId(loadBalancerId)
+
+                        tx.delete(classOf[ServiceContainerGroup], lbServiceContainerGroupId(routerId), ignoresNeo = true)
+                        tx.delete(classOf[Port], lbServiceContainerPortId(routerId), ignoresNeo = true)
+                        val lbUpdated = lb.toBuilder.clearServiceContainerId().build()
+                        tx.update(lbUpdated)
+                    }
                 }
             }
         }
