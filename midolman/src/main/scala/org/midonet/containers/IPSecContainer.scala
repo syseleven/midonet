@@ -50,7 +50,6 @@ import org.midonet.midolman.topology.VirtualTopology
 import org.midonet.packets.{IPAddr, IPv4Addr, IPv4Subnet}
 import org.midonet.util.concurrent._
 import org.midonet.util.functors._
-import org.midonet.util.io.Tailer
 import org.midonet.util.logging.Logger
 
 case class IPSecServiceDef(name: String,
@@ -264,8 +263,6 @@ case class IPSecConfig(script: String,
 
     val logPath = s"$runDir/pluto.log"
 
-    val createLogCmd = s"mkfifo -m 0600 $logPath"
-
     val statusCmd = s"ip netns exec ${ipsecService.name} ipsec whack " +
                     s"--status --ctlbase $plutoDir"
 }
@@ -324,7 +321,6 @@ class IPSecContainer @Inject()(@Named("id") id: UUID,
 
     private val ipsecLog =
         Logger(LoggerFactory.getLogger("org.midonet.containers.ipsec.ipsec-pluto"))
-    private var logTailer: Tailer = null
     private val logObserver = new Observer[String] {
         override def onNext(line: String): Unit = {
             ipsecLog debug line
@@ -336,8 +332,6 @@ class IPSecContainer @Inject()(@Named("id") id: UUID,
     }
 
     private val statusInterval = vt.config.containers.ipsec.statusUpdateInterval
-    private val logPollInterval = vt.config.containers.ipsec.loggingPollInterval
-    private val logTimeout = vt.config.containers.ipsec.loggingTimeout
 
     private val statusObservable =
         Observable.interval(statusInterval.toMillis, statusInterval.toMillis,
@@ -501,17 +495,6 @@ class IPSecContainer @Inject()(@Named("id") id: UUID,
         log info s"Writing secrets to ${config.secretsPath}"
         writeFile(config.getSecretsFileContents(log), config.secretsPath)
 
-        // Create the log FIFO file.
-        execute(config.createLogCmd)
-
-        // Create the tailer to read the log file.
-        if (logTailer ne null) {
-            logTailer.close()
-        }
-        logTailer = new Tailer(new File(config.logPath), ioExecutor, logObserver,
-                               logPollInterval.toMillis, TimeUnit.MILLISECONDS)
-        logTailer.start()
-
         // Schedule the status check.
         if (statusSubscription ne null) {
             statusSubscription.unsubscribe()
@@ -551,16 +534,6 @@ class IPSecContainer @Inject()(@Named("id") id: UUID,
                                          config.ipsecService.name)
         execute(config.stopServiceCmd)
         execute(config.cleanNsCmd)
-        try {
-            if (logTailer ne null) {
-                logTailer.close().await(logTimeout)
-            }
-        } catch {
-            case NonFatal(e) =>
-                log.info("Failed to close the IPSec log reader", e)
-        } finally {
-            logTailer = null
-        }
         try {
             FileUtils.deleteDirectory(new File(config.ipsecService.filepath))
         } catch {
