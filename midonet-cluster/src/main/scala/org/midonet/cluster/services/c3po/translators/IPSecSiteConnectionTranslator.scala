@@ -23,6 +23,7 @@ import scala.collection.immutable.TreeSet
 
 import org.midonet.cluster.data.storage.Transaction
 import org.midonet.cluster.models.Commons.{IPAddress, IPSubnet, IPVersion, UUID}
+import org.midonet.cluster.models.Commons.Condition.FragmentPolicy
 import org.midonet.cluster.models.Neutron.{IPSecSiteConnection, VpnService}
 import org.midonet.cluster.models.Topology._
 import org.midonet.cluster.services.c3po.NeutronTranslatorManager.Operation
@@ -190,6 +191,7 @@ class IPSecSiteConnectionTranslator(sequenceDispenser: SequenceDispenser)
         espRuleBldr.getConditionBuilder
             .setNwDstIp(localEndpointIp)
             .setNwProto(50) // ESP
+            .setFragmentPolicy(FragmentPolicy.ANY) // allow fragments
 
         // Redirect UDP traffic addressed to local endpoint on port 500 to VPN
         // port.
@@ -338,7 +340,8 @@ object IPSecSiteConnectionTranslator {
         val condition = r.getCondition
         condition.hasNwProto &&
         condition.getNwProto == 50 &&
-        !condition.getNwProtoInv
+        !condition.getNwProtoInv &&
+        condition.getFragmentPolicy() == FragmentPolicy.ANY
     }
 
     def isUDP500Rule(r: Rule): Boolean = {
