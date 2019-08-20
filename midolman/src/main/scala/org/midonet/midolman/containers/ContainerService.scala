@@ -550,7 +550,11 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
                 subscription.unsubscribe()
                 handleContainerError(instance, t, cp, errorStatus = true,
                                      Operation.Create)
-                deleteInstance(instance)
+                deleteContainerForInstance(instance).andThen {
+                    // On the service thread, try to delete the instance after
+                    // the last container operation has completed.
+                    case _ => deleteInstance(instance)
+                }(ec)
             case Success(_) =>
         }(ec)
     }
