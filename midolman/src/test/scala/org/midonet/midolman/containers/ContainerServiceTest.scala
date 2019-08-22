@@ -1285,8 +1285,8 @@ class ContainerServiceTest extends MidolmanSpec with TopologyBuilder
             val port2 = port.clearHostId()
             store.update(port2)
 
-            Then("The container status should be ERROR")
-            getContainerStatus(container.getId).get.getStatusCode shouldBe Code.ERROR
+            Then("The container status should not be set")
+            getContainerStatus(container.getId) shouldBe None
         }
 
         scenario("Status set when starting and stopping a bad delete container") {
