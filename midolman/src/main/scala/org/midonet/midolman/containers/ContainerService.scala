@@ -550,7 +550,14 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
                 subscription.unsubscribe()
                 handleContainerError(instance, t, cp, errorStatus = true,
                                      Operation.Create)
-                deleteInstance(instance)
+
+                // Delete the container, but leave the container state ERROR
+                // which will be cleared later (deleteContainer)
+                deleteContainerForInstance(instance, false).andThen {
+                    // On the service thread, try to delete the instance after
+                    // the last container operation has completed.
+                    case _ => deleteInstance(instance)
+                }(ec)
             case Success(_) =>
         }(ec)
     }
@@ -605,10 +612,12 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
                 }(ec)
             case instance: ContainerInstance =>
                 log warn s"There is no container $cp"
+                clearContainerStatus(instance, cp)
                 deleteInstance(instance)
                 Future.successful(null)
             case _ =>
-                log warn s"There is no container $cp"
+                log warn s"There is no container instance $cp"
+                clearContainerStatus(null, cp)
                 Future.successful(null)
         }
     }
@@ -616,7 +625,7 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
     /**
       * Deletes the container for the specified instance.
       */
-    private def deleteContainerForInstance(instance: ContainerInstance)
+    private def deleteContainerForInstance(instance: ContainerInstance, updateState: Boolean = true)
     : Future[Any] = {
         val handler = instance.handler.getOrElse {
             return Future.successful(())
@@ -624,8 +633,10 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
         instance.context.execute {
             tryOp(instance, handler.cp, errorStatus = false, Operation.Delete) {
                 // Set the container status to stopping.
-                setContainerStatus(instance, handler.cp, Code.STOPPING,
-                                   s"Container ${handler.cp} stopping")
+                if (updateState) {
+                    setContainerStatus(instance, handler.cp, Code.STOPPING,
+                                       s"Container ${handler.cp} stopping")
+                }
                 handler.handler.delete().andThen {
                     case _ => handler.subscription.unsubscribe()
                 }(instance.context.ec).andThen {
@@ -636,7 +647,7 @@ class ContainerService(vt: VirtualTopology, hostId: UUID,
                                              errorStatus = false,
                                              Operation.Delete)
                     case Success(_) =>
-                        clearContainerStatus(instance, handler.cp)
+                        if (updateState) clearContainerStatus(instance, handler.cp)
                 }(ec)
             }
         }
