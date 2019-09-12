@@ -23,7 +23,8 @@ import org.midonet.cluster.models.Topology;
 @ZoomEnum(clazz = Topology.HealthMonitor.HealthMonitorType.class)
 public enum HealthMonitorType {
     @ZoomEnumValue(value = "TCP") TCP,
-    @ZoomEnumValue(value = "HTTP") HTTP;
+    @ZoomEnumValue(value = "HTTP") HTTP,
+    @ZoomEnumValue(value = "HTTPS") HTTPS;
 
     public static HealthMonitorType
     fromProto(Topology.HealthMonitor.HealthMonitorType proto) {

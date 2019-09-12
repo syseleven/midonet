@@ -153,10 +153,11 @@ class HealthMonitorV2Translator
             .setHttpMethod(nHm.getHttpMethod)
             .setUrlPath(nHm.getUrlPath)
 
-        if (nHm.getType == NeutronHealthMonitorV2.HealthMonitorV2Type.HTTP) {
-            hm.setType(HealthMonitor.HealthMonitorType.HTTP)
-        }
-
+        hm.setType(nHm.getType match {
+            case NeutronHealthMonitorV2.HealthMonitorV2Type.HTTP => HealthMonitor.HealthMonitorType.HTTP
+            case NeutronHealthMonitorV2.HealthMonitorV2Type.HTTPS => HealthMonitor.HealthMonitorType.HTTPS
+            case _ => HealthMonitor.HealthMonitorType.TCP
+        })
         hm.build
     }
 }

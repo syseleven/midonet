@@ -80,8 +80,9 @@ case class LoadBalancerV2Config(id: UUID,
                     |""".stripMargin
 
             val hm = p.healthMonitor
+            val hmtype = hm.healthMonitorType
 
-            if (hm.healthMonitorType == HealthMonitorType.HTTP) {
+            if (hmtype == HealthMonitorType.HTTP || hmtype == HealthMonitorType.HTTPS) {
                 conf append s" option httpchk ${hm.httpMethod} ${hm.urlPath}\n"
 
                 if (hm.expectedCodes.nonEmpty) {
@@ -89,10 +90,11 @@ case class LoadBalancerV2Config(id: UUID,
                       s"    http-check expect rstatus ${hm.expectedCodes.replace(',', '|')}\n"
                 }
             }
+            val checkssl = if (hmtype == HealthMonitorType.HTTPS) "check-ssl verify none" else ""
             p.members filter (_.adminStateUp) foreach { m =>
                 conf append
                     s"""
-                       |    server ${m.id} ${m.address}:${m.port} check inter ${hm.delay}s fall ${hm.maxRetries}
+                       |    server ${m.id} ${m.address}:${m.port} check inter ${hm.delay}s fall ${hm.maxRetries} ${checkssl}
                        |""".stripMargin
             }
         }

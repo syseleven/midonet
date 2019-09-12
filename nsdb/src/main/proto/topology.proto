@@ -150,6 +150,7 @@ message HealthMonitor {
     enum HealthMonitorType {
         TCP = 1;
         HTTP = 2;
+        HTTPS = 3;
     }
 
     optional UUID id = 1;
