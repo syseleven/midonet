@@ -212,7 +212,7 @@ case class IPSecConfig(script: String,
                    |    ikev2=${ikeVersionToConfig(c.getIkepolicy.getIkeVersion)}
                    |    ike=${ikeParamsToConfig(c.getIkepolicy)}
                    |    ikelifetime=${c.getIkepolicy.getLifetimeValue}s
-                   |    auth=${transformProtocolToConfig(c.getIpsecpolicy.getTransformProtocol)}
+                   |    phase2=${transformProtocolToConfig(c.getIpsecpolicy.getTransformProtocol)}
                    |    phase2alg=${ipsecParamsToConfig(c.getIpsecpolicy)}
                    |    type=${encapModeToConfig(c.getIpsecpolicy.getEncapsulationMode)}
                    |    lifetime=${c.getIpsecpolicy.getLifetimeValue}s

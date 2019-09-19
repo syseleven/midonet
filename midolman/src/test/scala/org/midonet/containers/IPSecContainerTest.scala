@@ -177,7 +177,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                    |    ikev2=never
                    |    ike=3des-sha1;modp1024
                    |    ikelifetime=${ike.getLifetimeValue}s
-                   |    auth=esp
+                   |    phase2=esp
                    |    phase2alg=3des-sha1;modp1024
                    |    type=tunnel
                    |    lifetime=${ipsec.getLifetimeValue}s
@@ -285,7 +285,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                     |    ikev2=insist
                     |    ike=3des-sha1;modp1024
                     |    ikelifetime=${ike.getLifetimeValue}s
-                    |    auth=ah-esp
+                    |    phase2=ah-esp
                     |    phase2alg=3des-sha1;modp1024
                     |    type=transport
                     |    lifetime=${ipsec.getLifetimeValue}s
@@ -308,7 +308,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                     |    ikev2=insist
                     |    ike=3des-sha1;modp1024
                     |    ikelifetime=${ike.getLifetimeValue}s
-                    |    auth=ah-esp
+                    |    phase2=ah-esp
                     |    phase2alg=3des-sha1;modp1024
                     |    type=transport
                     |    lifetime=${ipsec.getLifetimeValue}s
@@ -331,7 +331,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                     |    ikev2=insist
                     |    ike=3des-sha1;modp1024
                     |    ikelifetime=${ike.getLifetimeValue}s
-                    |    auth=ah-esp
+                    |    phase2=ah-esp
                     |    phase2alg=3des-sha1;modp1024
                     |    type=transport
                     |    lifetime=${ipsec.getLifetimeValue}s
@@ -456,7 +456,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                     |    ikev2=insist
                     |    ike=3des-sha1;modp1024
                     |    ikelifetime=${ike.getLifetimeValue}s
-                    |    auth=ah-esp
+                    |    phase2=ah-esp
                     |    phase2alg=3des-sha1;modp1024
                     |    type=transport
                     |    lifetime=${ipsec.getLifetimeValue}s
@@ -479,7 +479,7 @@ class IPSecContainerTest extends MidolmanSpec with Matchers with TopologyBuilder
                     |    ikev2=insist
                     |    ike=3des-sha1;modp1024
                     |    ikelifetime=${ike.getLifetimeValue}s
-                    |    auth=ah-esp
+                    |    phase2=ah-esp
                     |    phase2alg=3des-sha1;modp1024
                     |    type=transport
                     |    lifetime=${ipsec.getLifetimeValue}s

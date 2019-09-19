@@ -135,7 +135,7 @@ init_conns() {
 
     set -e
     for ((i=0;i<$MAX_CONNS;i++)) do
-        ip netns exec $NAME ipsec addconn --ctlbase ${PLUTO_PATH}.ctl \
+        ip netns exec $NAME ipsec addconn --ctlbase ${PLUTO_PATH}/pluto.ctl \
                                           --defaultroutenexthop $GATEWAY_IP \
                                           --config $CONF_FILE \
                                           ${CONNS[$i]}
