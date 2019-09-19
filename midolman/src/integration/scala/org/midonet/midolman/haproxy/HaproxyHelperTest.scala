@@ -20,6 +20,7 @@ import java.util.UUID
 
 import org.junit.runner.RunWith
 import org.midonet.midolman.l4lb._
+import org.midonet.midolman.state.l4lb.HealthMonitorType
 import org.scalatest.concurrent.Eventually
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, ShouldMatchers}
@@ -87,7 +88,9 @@ class HaproxyHelperTest extends FeatureSpec
         }
     }
 
-    val healthMonitor = HealthMonitorV2Config(UUID.randomUUID(), true, 1, 1, 1)
+    val healthMonitor = HealthMonitorV2Config(UUID.randomUUID(),
+                                              HealthMonitorType.TCP,
+                                              true, 1, 1, 1, "", "", "")
 
     val member1 = MemberV2Config(UUID.randomUUID(), true, "10.0.0.1", 80)
     val member2 = MemberV2Config(UUID.randomUUID(), true, "10.0.0.2", 80)
