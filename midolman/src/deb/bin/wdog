@@ -105,6 +105,7 @@ class SelectLoop:
         self.fds.append(fd)
 
     def loop(self, timeout):
+        "This isn't actually a loop..."
         try:
             rr, wr, er = select.select(self.fds, [], [], timeout)
             for fd in rr:
@@ -139,6 +140,8 @@ class ProcMon(ISelectLoopObserver):
             while self.running and self.child_pid > 0:
                 self.select_loop.loop(1.0)
                 self.ticks_left -= 1
+                if self.ticks_left < 0 and not killed:
+                    self.check_other_pipe_activity()
                 if self.ticks_left < 0 and not killed:
                     pid = self.child_pid
                     pgid = os.getpgid(pid)
@@ -246,6 +249,21 @@ class ProcMon(ISelectLoopObserver):
 
         if nbytes > 0:
             self.ticks_left = self.grace
+            self.statdata = os.fstat(self.pipe)
+
+    def check_other_pipe_activity(self):
+        """Check if there is some other sign that the child is alive.
+
+        If some rogue program is reading from our fifo, the st_mtime
+        still gets updated. So as long as st_mtime keeps increasing,
+        the child must be alive. (Or somebody else is also writing to
+        the fifo, but there probably is no way to defend against that)
+        """
+        statdata = os.fstat(self.pipe)
+
+        if statdata.st_mtime > self.statdata.st_mtime:
+            self.ticks_left = self.grace
+            self.statdata = statdata
 
     def open_pipe(self):
         msg('Opening pipe at ' + self.pipe_path)
@@ -258,6 +276,7 @@ class ProcMon(ISelectLoopObserver):
                 os.mkfifo(self.pipe_path, 0o600)
 
         self.pipe = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+        self.statdata = os.fstat(self.pipe)
         return self.pipe
 
     def spawn(self):
