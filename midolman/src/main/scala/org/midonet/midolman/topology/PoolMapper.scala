@@ -114,6 +114,7 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
             serviceContainerTracker.requestRefs(lb.getServiceContainerId)
         } else {
             serviceContainerTracker.requestRefs(Set[UUID]())
+            containerPortTracker.requestRefs(Set[UUID]())
             currentHaproxyHost = null
             haproxySubject onNext null
         }
