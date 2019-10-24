@@ -173,24 +173,26 @@ class StoreObjectReferenceTracker[D >: Null](val vt: VirtualTopology,
         new StoreObjectState[D](clazz, id, vt)
 }
 
-class StateKeyState[D](val clazz: Class[D],
+class StateKeyState[D](val namespaces: Observable[String],
+                       val clazz: Class[D],
                        val id: UUID,
                        val key: String,
                        val vt: VirtualTopology)
         extends ObjectStateBase[StateKey] {
     override val observable: Observable[StateKey] =
-        vt.stateStore.keyObservable(clazz, id, key)
+        vt.stateStore.keyObservable(namespaces, clazz, id, key)
             .observeOn(vt.vtScheduler)
             .doOnNext(makeAction1(currentObj = _))
             .takeUntil(mark)
 }
 
 class StateKeyReferenceTracker[D >: Null](val vt: VirtualTopology,
+                                          namespaces: Observable[String],
                                           clazz: Class[D], key: String,
                                           log: Logger)
         extends ObjectReferenceTrackerBase[StateKey, StateKeyState[D]](
             classOf[StateKey], log) {
 
     override protected def newState(id: UUID): StateKeyState[D] =
-        new StateKeyState[D](clazz, id, key, vt)
+        new StateKeyState[D](namespaces, clazz, id, key, vt)
 }

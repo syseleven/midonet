@@ -28,9 +28,9 @@ import org.scalatest.junit.JUnitRunner
 import rx.Observable
 import rx.observers.TestObserver
 
-import org.midonet.cluster.data.storage.{CreateOp, NotFoundException, StateStorage, Storage}
+import org.midonet.cluster.data.storage.{CreateOp, InMemoryStorage, NotFoundException, StateStorage, Storage}
 import org.midonet.cluster.models.Commons.LBStatus
-import org.midonet.cluster.models.Topology.{PoolMember, SessionPersistence, Vip, Pool => TopologyPool}
+import org.midonet.cluster.models.Topology.{LoadBalancer, PoolMember, SessionPersistence, Vip, Pool => TopologyPool}
 import org.midonet.cluster.services.MidonetBackend
 import org.midonet.cluster.topology.{TopologyBuilder, TopologyMatchers}
 import org.midonet.cluster.util.UUIDUtil._
@@ -947,7 +947,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
     feature("Tracks member status reported to state storage by health monitor") {
         scenario("Publishes initial ACTIVE status") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with ACTIVE status in state storage")
@@ -970,7 +971,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario("Publishes initial INACTIVE status") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with ACTIVE status in state storage")
@@ -993,7 +995,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario("Publishes initial ACTIVE status if HM is down") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with status not given in state storage")
@@ -1016,7 +1019,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario("Publishes ACTIVE => INACTIVE update") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with ACTIVE status in state storage")
@@ -1050,7 +1054,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario("Publishes INACTIVE => ACTIVE update") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with INACTIVE status in state storage")
@@ -1084,7 +1089,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario("Updates status to ACTIVE when health monitor goes down") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("A pool member with INACTIVE status in state storage")
@@ -1118,7 +1124,8 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
 
         scenario ("Handles updates for many members") {
             Given("A pool")
-            val pool = createPool()
+            val lb = createLoadBalancerWithHaproxy()
+            val pool = createPool(loadBalancerId = Some(lb.getId))
             store.create(pool)
 
             And("100 pool members with various statuses")
@@ -1190,6 +1197,20 @@ class PoolMapperTest extends MidolmanSpec with TopologyBuilder
         store.create(pm)
         writeStatus(pm.getId, status)
         pm
+    }
+
+    private def createLoadBalancerWithHaproxy(): LoadBalancer = {
+
+        val sc = createServiceContainer(serviceType = Some("HAPROXY"))
+        store.create(sc)
+
+        val lb = createLoadBalancer().toBuilder.setServiceContainerId(sc.getId).build()
+        store.create(lb)
+
+        val port = createRouterPort(hostId = Some(InMemoryStorage.namespaceId),
+                                    containerId = Some(sc.getId))
+        store.create(port)
+        lb
     }
 
     private def toSimLbStatus(st: Option[LBStatus]): SimLBStatus = st match {

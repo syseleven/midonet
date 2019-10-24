@@ -26,7 +26,12 @@ import rx.Observable
 import rx.subjects.PublishSubject
 
 import org.midonet.cluster.data.storage.SingleValueKey
-import org.midonet.cluster.models.Topology.{Pool => TopologyPool, PoolMember => TopologyPoolMember, Vip => TopologyVip}
+import org.midonet.cluster.models.Topology.{LoadBalancer => TopologyLoadBalancer,
+                                            Pool => TopologyPool,
+                                            PoolMember => TopologyPoolMember,
+                                            Port => TopologyPort,
+                                            ServiceContainer => TopologyServiceContainer,
+                                            Vip => TopologyVip}
 import org.midonet.cluster.services.MidonetBackend.StatusKey
 import org.midonet.cluster.util.UUIDUtil._
 import org.midonet.midolman.simulation.{Pool => SimulationPool, PoolMember => SimulationPoolMember, Vip => SimulationVip}
@@ -53,6 +58,16 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
     private val vips =
         new mutable.HashMap[UUID, DeviceState[SimulationVip]]
 
+    private val lbTracker =
+        new StoreObjectReferenceTracker(vt, classOf[TopologyLoadBalancer], log)
+    private val serviceContainerTracker =
+        new StoreObjectReferenceTracker(vt, classOf[TopologyServiceContainer], log)
+    private val containerPortTracker =
+        new StoreObjectReferenceTracker(vt, classOf[TopologyPort], log)
+
+    private val haproxySubject = PublishSubject.create[String]
+    private var currentHaproxyHost: UUID = null
+
     // A subject that emits a pool member observable for every pool member added
     // to the pool.
     private lazy val membersSubject = PublishSubject
@@ -68,7 +83,7 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
     // Tracks pool member status via the VT's StateStorage.
     private val memberStatusTracker =
         new StateKeyReferenceTracker[TopologyPoolMember](
-            vt, classOf[TopologyPoolMember], StatusKey, log)
+            vt, haproxySubject, classOf[TopologyPoolMember], StatusKey, log)
     private val memberStatusObservable = memberStatusTracker.refsObservable
         .map[TopologyPool](makeFunc1 { sk =>
             assertThread()
@@ -86,11 +101,41 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
             pool
         })
 
+
     private lazy val poolObservable = vt.store
         .observable(classOf[TopologyPool], poolId)
         .observeOn(vt.vtScheduler)
         .doOnCompleted(makeAction0(poolDeleted()))
         .doOnNext(makeAction1(poolUpdated))
+
+    private def lbUpdated(lb: TopologyLoadBalancer): Unit = {
+        log.debug("LB updated")
+        if (lb.hasServiceContainerId) {
+            serviceContainerTracker.requestRefs(lb.getServiceContainerId)
+        } else {
+            serviceContainerTracker.requestRefs(Set[UUID]())
+            containerPortTracker.requestRefs(Set[UUID]())
+            currentHaproxyHost = null
+            haproxySubject onNext null
+        }
+    }
+
+    private def serviceContainerUpdated(sc: TopologyServiceContainer): Unit = {
+        log.debug("Container updated")
+        if (sc.hasPortId)
+            containerPortTracker.requestRefs(sc.getPortId)
+        else {
+            containerPortTracker.requestRefs(Set[UUID]())
+            currentHaproxyHost = null
+            haproxySubject onNext null
+        }
+    }
+
+    private def containerPortUpdated(port: TopologyPort): Unit = {
+        log.debug("Container port updated")
+        currentHaproxyHost = if (port.hasHostId) port.getHostId.asJava else null
+        haproxySubject onNext currentHaproxyHost.asNullableString
+    }
 
     // The output device observable for the pool mapper.
     //
@@ -109,7 +154,11 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
     //      +---------------------+
     protected override val observable = Observable
         .merge(membersObservable, memberStatusObservable,
-               vipsObservable, poolObservable)
+               vipsObservable,
+               lbTracker.refsObservable.doOnNext(makeAction1(lbUpdated)),
+               serviceContainerTracker.refsObservable.doOnNext(makeAction1(serviceContainerUpdated)),
+               containerPortTracker.refsObservable.doOnNext(makeAction1(containerPortUpdated)),
+               poolObservable)
         .filter(makeFunc1(isPoolReady))
         .map[SimulationPool](makeFunc1(buildPool))
         .distinctUntilChanged()
@@ -123,6 +172,9 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
         val ready = (pool ne null) &&
                     members.values.forall(_.isReady) &&
                     memberStatusTracker.areRefsReady &&
+                    lbTracker.areRefsReady &&
+                    serviceContainerTracker.areRefsReady &&
+                    containerPortTracker.areRefsReady &&
                     vips.values.forall(_.isReady)
         log.debug("Pool ready: {}", Boolean.box(ready))
         ready
@@ -148,12 +200,21 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
         vipIds = pool.getVipIdsList.asScala.map(_.asJava)
         log.debug("Pool updated with members {} VIPs {}", memberIds, vipIds)
 
+        if (pool.hasLoadBalancerId)
+            lbTracker.requestRefs(pool.getLoadBalancerId)
+        else {
+            lbTracker.requestRefs(Set[UUID]())
+            currentHaproxyHost = null
+        }
+
         // Update the device state for pool members.
         val memberIdSet = memberIds.toSet
         updateZoomDeviceState(
             classOf[SimulationPoolMember], classOf[TopologyPoolMember],
             memberIdSet, members, membersSubject, vt)
         memberStatusTracker.requestRefs(memberIdSet)
+        if (lbTracker.areRefsReady)
+            haproxySubject onNext currentHaproxyHost.asNullableString
 
         // Update the device state for VIPs.
         updateZoomDeviceState(
@@ -174,12 +235,16 @@ final class PoolMapper(poolId: UUID, vt: VirtualTopology)
         membersSubject.onCompleted()
         memberStatusTracker.completeRefs()
         vipsSubject.onCompleted()
+        lbTracker.completeRefs()
+        serviceContainerTracker.completeRefs()
+        containerPortTracker.completeRefs()
+        haproxySubject.onCompleted()
     }
 
     /**
      * Maps the [[TopologyPool]] to a [[SimulationPool]] device.
      */
-    private def buildPool(pool: TopologyPool): SimulationPool = {
+    private def buildPool(ignored: AnyRef): SimulationPool = {
         assertThread()
 
         // Compute the active and disabled pool members.
