@@ -35,6 +35,9 @@ public class DtoHealthMonitor {
     private LBStatus status = LBStatus.ACTIVE;
     private URI uri;
     private URI pools;
+    private String expectedCodes;
+    private String httpMethod;
+    private String urlPath;
 
     public UUID getId() {
         return id;
@@ -88,6 +91,22 @@ public class DtoHealthMonitor {
         return status;
     }
 
+    public String getExpectedCodes() {
+        return expectedCodes;
+    }
+
+    public void setExpectedCodes(String expectedCodes) {
+        this.expectedCodes = expectedCodes;
+    }
+
+    public String getHttpMethod() { return httpMethod; }
+
+    public void setHttpMethod(String httpMethod) { this.httpMethod = httpMethod; }
+
+    public String getUrlPath() { return urlPath; }
+
+    public void setUrlPath(String urlPath) { this.urlPath = urlPath; }
+
     @JsonIgnore
     public void setStatus(LBStatus status) {
         this.status = status;
@@ -122,12 +141,15 @@ public class DtoHealthMonitor {
                 timeout == that.getTimeout() &&
                 maxRetries == that.getMaxRetries() &&
                 adminStateUp == that.isAdminStateUp() &&
-                status == that.getStatus();
+                status == that.getStatus() &&
+                Objects.equal(expectedCodes, that.getExpectedCodes()) &&
+                Objects.equal(httpMethod, that.getHttpMethod()) &&
+                Objects.equal(urlPath, that.getUrlPath());
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(id, type, delay, timeout, maxRetries,
-                adminStateUp, status);
+                adminStateUp, status, expectedCodes, httpMethod, urlPath);
     }
 }

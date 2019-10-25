@@ -73,7 +73,10 @@ class HealthMonitorConfigWatcherTest
                                       LBStatus.ACTIVE,
                                       delay = 1,
                                       timeout = 1,
-                                      maxRetries = 1)
+                                      maxRetries = 1,
+                                      expectedCodes = "",
+                                      httpMethod = "",
+                                      urlPath = "")
 
         val vip = new SimVip(UUID.randomUUID(),
                              adminStateUp = stateUp,
