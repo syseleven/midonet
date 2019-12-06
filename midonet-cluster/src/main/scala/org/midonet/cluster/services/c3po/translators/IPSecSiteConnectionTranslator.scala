@@ -269,9 +269,9 @@ class IPSecSiteConnectionTranslator(sequenceDispenser: SequenceDispenser)
 
         val oldCnxn = tx.get(classOf[IPSecSiteConnection], cnxn.getId)
         val oldRoutes = TreeSet(tx.getAll(classOf[Route],
-                                oldCnxn.getRouteIdsList) : _*) (routeOrdering)
+                                oldCnxn.getRouteIdsList) : _*) (RouteOrdering)
         val newRoutes = TreeSet(createRemoteRoutes(tx, cnxn,
-                                                   vpn.getContainerId): _*) (routeOrdering)
+                                                   vpn.getContainerId): _*) (RouteOrdering)
 
         val toDelete = oldRoutes &~ newRoutes
         val toCreate = newRoutes &~ oldRoutes
@@ -316,11 +316,19 @@ object IPSecSiteConnectionTranslator {
 
     val VpnServiceType = "IPSEC"
 
-    private val routeOrdering = scala.Ordering.fromLessThan[Route](
-        (a: Route, b: Route) => {
-            a.getSrcSubnet != b.getSrcSubnet ||
-            a.getDstSubnet != b.getDstSubnet
-        })
+    object RouteOrdering extends scala.Ordering[Route] {
+        def compare(x: Route, y: Route) : Int = {
+            val res1 = x.getSrcSubnet.getAddress compare y.getSrcSubnet.getAddress
+            if (res1 != 0) return res1
+            val res2 = x.getSrcSubnet.getPrefixLength compare y.getSrcSubnet.getPrefixLength
+            if (res2 != 0) return res2
+            val res3 = x.getDstSubnet.getAddress compare y.getDstSubnet.getAddress
+            if (res3 != 0) return res3
+            val res4 = x.getDstSubnet.getPrefixLength compare y.getDstSubnet.getPrefixLength
+            if (res4 != 0) return res4
+            0
+        }
+    }
 
     /** ID of route directing traffic addressed to 169.254.x.x/30 to the VPN. */
     def vpnContainerRouteId(containerId: UUID): UUID =
