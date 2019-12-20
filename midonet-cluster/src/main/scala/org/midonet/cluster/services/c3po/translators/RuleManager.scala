@@ -23,6 +23,7 @@ import org.midonet.cluster.models.Topology.Rule
 import org.midonet.cluster.models.Topology.Rule.Action._
 import org.midonet.cluster.models.Topology.Rule.{JumpRuleData, NatRuleData, NatTarget}
 import org.midonet.cluster.util.UUIDUtil
+import org.midonet.cluster.util.IPSubnetUtil
 
 /**
  * Contains rule-related operations shared by multiple translators.
@@ -42,6 +43,15 @@ trait RuleManager {
             .setType(Rule.Type.LITERAL_RULE)
             .setAction(ACCEPT)
             .setCondition(Condition.newBuilder.setMatchReturnFlow(true))
+            .build()
+
+    protected def ncFlowRule(chainId: UUID): Rule =
+        newRule(chainId)
+            .setType(Rule.Type.LITERAL_RULE)
+            .setAction(ACCEPT)
+            .setCondition(Condition.newBuilder
+                .setNwSrcIp(IPSubnetUtil.toProto("169.254.0.0/16"))
+                .setNwProto(1))
             .build()
 
     protected def dropRuleBuilder(chainId: UUID): Rule.Builder =

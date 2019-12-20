@@ -731,6 +731,9 @@ class PortTranslator(stateTableStorage: StateTableStorage,
             // Create return flow rules.
             portCtx.outRules += Create(returnFlowRule(outChainId))
 
+            // Create flow rule matching network control traffic
+            portCtx.outRules += Create(ncFlowRule(outChainId))
+
             // Create return flow rules matching for inbound chain.
             portCtx.inRules += Create(returnFlowRule(inChainId))
 
