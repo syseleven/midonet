@@ -44,11 +44,17 @@ public enum RuleProtocol {
     @ZoomEnumValue("VRRP")
     VRRP("vrrp", (byte)112),
 
+    @ZoomEnumValue("GRE")
+    GRE("gre", (byte)47),
+
     @ZoomEnumValue("ESP")
     ESP("esp", (byte)50),
 
     @ZoomEnumValue("IPIP")
-    IPIP("ipip", (byte)94);
+    IPIP("ipip", (byte)4),
+
+    @ZoomEnumValue("IPIP94")
+    IPIP94("ipip94", (byte)94);
 
     private final String value;
     private final byte number;
