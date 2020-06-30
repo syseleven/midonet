@@ -36,7 +36,25 @@ public enum RuleProtocol {
     ICMP("icmp", org.midonet.packets.ICMP.PROTOCOL_NUMBER),
 
     @ZoomEnumValue("ICMPV6")
-    ICMPv6("icmpv6", org.midonet.packets.ICMPv6.PROTOCOL_NUMBER);
+    ICMPv6("icmpv6", org.midonet.packets.ICMPv6.PROTOCOL_NUMBER),
+
+    @ZoomEnumValue("AH")
+    AH("ah", (byte)51),
+
+    @ZoomEnumValue("VRRP")
+    VRRP("vrrp", (byte)112),
+
+    @ZoomEnumValue("GRE")
+    GRE("gre", (byte)47),
+
+    @ZoomEnumValue("ESP")
+    ESP("esp", (byte)50),
+
+    @ZoomEnumValue("IPIP")
+    IPIP("ipip", (byte)4),
+
+    @ZoomEnumValue("IPIP94")
+    IPIP94("ipip94", (byte)94);
 
     private final String value;
     private final byte number;
@@ -69,6 +87,9 @@ public enum RuleProtocol {
             if (s.equalsIgnoreCase(protocol.value)) {
                 return protocol;
             }
+        }
+        if (s.equalsIgnoreCase("ipv6-icmp")) {
+            return ICMPv6;
         }
         return null;
     }

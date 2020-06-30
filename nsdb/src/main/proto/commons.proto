@@ -70,6 +70,12 @@ enum Protocol {
     UDP = 17;     // 0x11
     ICMP = 1;     // 0x1
     ICMPV6 = 58;  // 0x3a
+    IPIP = 4;     // 0x4
+    GRE = 47;     // 0x2f
+    ESP = 50;     // 0x32
+    AH = 51;      // 0x33
+    IPIP94 = 94;  // 0x5e
+    VRRP = 112;   // 0x70
 }
 
 enum LBStatus {
