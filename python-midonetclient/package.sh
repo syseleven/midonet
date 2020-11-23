@@ -130,6 +130,11 @@ function package_deb() {
         -t deb ./setup.py
     if type python3 > /dev/null; then
         build_hook_scripts python3-midonetclient
+        # We want to be able to install both packages at the
+        # same time, but they would both install midonet-cli.
+        # Rename it here, and then back.
+        mv src/bin/midonet-cli src/bin/midonet-cli3
+        sed -e 's/midonet-cli/midonet-cli3/g' --in-place=.bak setup.py
         eval fpm $FPM_BASE_ARGS $DEB_ARGS \
             --name python3-midonetclient \
             --description \"$DESCRIPTION - Python 3.x\" \
@@ -142,6 +147,8 @@ function package_deb() {
             --after-install package-hooks/after-install.sh \
             --after-upgrade package-hooks/after-upgrade.sh \
             -t deb ./setup.py
+        cp setup.py.bak setup.py
+        mv src/bin/midonet-cli3 src/bin/midonet-cli
     fi
 }
 
