@@ -196,9 +196,9 @@ public class IPSecSiteConnection extends ZoomObject {
 
     @ZoomEnum(clazz = Neutron.IPSecSiteConnection.IPSecAuthAlgorithm.class)
     public enum IPSecAuthAlgorithm {
-        @ZoomEnumValue("SHA1")SHA1;
-        @ZoomEnumValue("SHA256")SHA256;
-        @ZoomEnumValue("SHA384")SHA384;
+        @ZoomEnumValue("SHA1")SHA1,
+        @ZoomEnumValue("SHA256")SHA256,
+        @ZoomEnumValue("SHA384")SHA384,
         @ZoomEnumValue("SHA512")SHA512;
 
         @JsonCreator
