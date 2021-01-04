@@ -156,6 +156,9 @@ case class IPSecConfig(script: String,
     def ipsecAuthToConfig(authAlgorithm: IPSecAuthAlgorithm): String = {
         authAlgorithm match {
             case IPSecAuthAlgorithm.SHA1 => "sha1"
+            case IPSecAuthAlgorithm.SHA256 => "sha256"
+            case IPSecAuthAlgorithm.SHA384 => "sha384"
+            case IPSecAuthAlgorithm.SHA512 => "sha512"
         }
     }
 
