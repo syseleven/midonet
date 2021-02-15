@@ -315,7 +315,7 @@ public abstract class UnixChannel<Address> extends AbstractSelectableChannel
         IOUtil.configureBlocking(fd, block);
     }
 
-    public void translateAndSetInterestOps(int ops, SelectionKeyImpl sk) {
+    public int translateInterestOps(int ops) {
         int newOps = 0;
 
         if ((ops & SelectionKey.OP_ACCEPT) != 0)
@@ -327,6 +327,11 @@ public abstract class UnixChannel<Address> extends AbstractSelectableChannel
         if ((ops & SelectionKey.OP_CONNECT) != 0)
             newOps |= Net.POLLIN;
 
+        return newOps;
+    }
+
+    public void translateAndSetInterestOps(int ops, SelectionKeyImpl sk) {
+        int newOps = translateInterestOps(ops);
         sk.selector.putEventOps(sk, newOps);
     }
 

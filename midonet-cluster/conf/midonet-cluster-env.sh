@@ -19,6 +19,7 @@
 # The first existing directory is used for JAVA_HOME if needed.
 LIB_PATTERNS='{lib64,lib}'
 JVM_SEARCH_DIRS=$( bash -c "echo \
+                 /usr/$LIB_PATTERNS/jvm/adoptopenjdk-11-hotspot-amd64 \
                  /usr/$LIB_PATTERNS/jvm/java-1.8.0-openjdk-amd64 \
                  /usr/$LIB_PATTERNS/jvm/java-8-openjdk-amd64 \
                  /usr/$LIB_PATTERNS/jvm/java-8-oracle \
@@ -30,7 +31,7 @@ JVM_SEARCH_DIRS=$( bash -c "echo \
 check_for_java8() {
     [ "x" = "x$1" ] && return 1
     [ -x "$1" ] || return 1
-    $1 -version 2>&1 | grep -q 'version "1.8'
+    $1 -version 2>&1 | grep -q 'version "\(1.8\|11.0\)'
 }
 
 if [ -n "`which java`" ]; then
