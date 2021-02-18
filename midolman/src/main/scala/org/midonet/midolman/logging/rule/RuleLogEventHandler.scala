@@ -66,7 +66,7 @@ abstract class RuleLogEventHandler extends EventHandler[RuleLogEvent]
         if (disabledUntil > now) {
             log.debug("Rule logging disabled for {} more seconds due to " +
                       "prior error, not logging event.",
-                      new java.lang.Long((disabledUntil - now) / 1000))
+                      java.lang.Long.valueOf((disabledUntil - now) / 1000))
             return
         } else if (os == null) {
             log.debug("Output stream is null, not logging event.")

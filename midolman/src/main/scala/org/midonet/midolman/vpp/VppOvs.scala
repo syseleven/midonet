@@ -69,7 +69,7 @@ class VppOvs(dp: Datapath, config: Fip64Config) extends MidolmanLogging {
         while (buf.getInt(i + NetlinkMessage.NLMSG_SEQ_OFFSET) != seq) {
             i += buf.getInt(i + NetlinkMessage.NLMSG_LEN_OFFSET)
 
-            if (i >= buf.position) {
+            if (i >= buf.position()) {
                 buf.clear()
                 reader.read(buf)
                 i = 0

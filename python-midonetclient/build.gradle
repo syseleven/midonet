@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-task clean(overwrite: true, type: Exec) {
-    commandLine './package.sh', 'clean'
+clean.doLast {
+    project.exec {
+        commandLine './package.sh', 'clean'
+    }
 }
 
 task rpm(type: Exec) {
-    protobuf.tools.resolve()
-    environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    // environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    environment PROTOC_EXECUTABLE: "/usr/bin/protoc"
     commandLine './package.sh', 'rpm', project.rpmVersion, project.rpmRelease
 }
 
 task debian(type: Exec) {
-    protobuf.tools.resolve()
-    environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    // environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    environment PROTOC_EXECUTABLE: "/usr/bin/protoc"
     commandLine './package.sh', 'deb', project.debVersion
 }
 
 task tar(type: Exec) {
-    protobuf.tools.resolve()
-    environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    // environment PROTOC_EXECUTABLE: "${protobuf.tools.protoc.path}"
+    environment PROTOC_EXECUTABLE: "/usr/bin/protoc"
     commandLine './package.sh', 'tar', project.debVersion
 }

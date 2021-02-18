@@ -19,7 +19,7 @@ apply plugin: 'scala'
 jar {
     manifest {
         attributes 'Implementation-Title': 'MidoNet Netlink library',
-        'Implementation-Version': version
+        'Implementation-Version': archiveVersion
     }
 }
 

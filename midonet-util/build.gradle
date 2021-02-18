@@ -25,7 +25,8 @@ dependencies {
             libraries.jackson_databind, libraries.jackson_annotations,
             libraries.jsch, libraries.logback_logstash, libraries.netty,
             libraries.metrics, libraries.protobuf, libraries.rx, libraries.scala,
-            libraries.sun_tools, libraries.scala_logging, libraries.jna,
+            // libraries.sun_tools,
+            libraries.scala_logging, libraries.jna,
             libraries.scala_async, libraries.guice
 
     testCompile libraries.scalatest, libraries.scalacheck,
@@ -36,7 +37,7 @@ dependencies {
 jar {
     manifest {
         attributes 'Implementation-Title': 'MidoNet Utilily Library',
-                   'Implementation-Version': version
+                   'Implementation-Version': archiveVersion
     }
 }
 

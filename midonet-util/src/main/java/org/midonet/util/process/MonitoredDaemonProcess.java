@@ -108,7 +108,7 @@ public class MonitoredDaemonProcess extends AbstractService {
             .setEnvVariables(envVars)
             .run();
         log.info("Process ``{}`` starting with pid {} at time {}",
-                 cmd, ProcessHelper.getProcessPid(process), clock.time());
+                 cmd, process.pid(), clock.time());
     }
 
     @VisibleForTesting

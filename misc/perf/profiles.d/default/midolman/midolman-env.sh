@@ -66,7 +66,7 @@ JVM_OPTS="$JVM_OPTS -XX:OnOutOfMemoryError=\"kill;-3;%p\""
 # Do not use biased locking
 JVM_OPTS="$JVM_OPTS -XX:-UseBiasedLocking"
 
-# GC tuning options
+# GC tuning options (G1 GC)
 JVM_OPTS="$JVM_OPTS -XX:+UseParNewGC"
 JVM_OPTS="$JVM_OPTS -XX:+UseConcMarkSweepGC"
 JVM_OPTS="$JVM_OPTS -XX:+CMSParallelRemarkEnabled"
@@ -76,16 +76,18 @@ JVM_OPTS="$JVM_OPTS -XX:CMSInitiatingOccupancyFraction=75"
 JVM_OPTS="$JVM_OPTS -XX:+UseCMSInitiatingOccupancyOnly"
 JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 JVM_OPTS="$JVM_OPTS -XX:+ResizeTLAB"
-JVM_OPTS="$JVM_OPTS -XX:TLABSize=2m"
+JVM_OPTS="$JVM_OPTS -XX:TLABSize=512k"
 JVM_OPTS="$JVM_OPTS -XX:PretenureSizeThreshold=2m"
 
+# GC tuning options (Shenandoah GC) - uncomment to enable Shenandoah GC (and comment the G1 options above)
+# JVM_OPTS="$JVM_OPTS -XX:+UseShenandoahGC"
+# JVM_OPTS="$JVM_OPTS -XX:+AlwaysPreTouch"
+# JVM_OPTS="$JVM_OPTS -XX:+UseNUMA"
+# JVM_OPTS="$JVM_OPTS -XX:+UseLargePages"
+# JVM_OPTS="$JVM_OPTS -XX:+UseTransparentHugePages"
+
 # GC logging options -- uncomment to enable
-# JVM_OPTS="$JVM_OPTS -XX:+PrintGCDetails"
-# JVM_OPTS="$JVM_OPTS -XX:+PrintGCTimeStamps"
-# JVM_OPTS="$JVM_OPTS -XX:+PrintClassHistogram"
-# JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
-# JVM_OPTS="$JVM_OPTS -XX:+PrintGCApplicationStoppedTime"
-# JVM_OPTS="$JVM_OPTS -Xloggc:/var/log/midolman/gc-`date +%Y%m%d_%H%M%S`.log"
+# JVM_OPTS="$JVM_OPTS -Xlog:gc*:/var/log/midolman/gc-`date +%Y%m%d_%H%M%S`.log:time,level,tags:filecount=10,filesize=10M"
 
 # uncomment to have Midolman JVM listen for remote debuggers/profilers on port 1414
 # JVM_OPTS="$JVM_OPTS -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1414"

@@ -59,7 +59,7 @@ class ByteBufferBlockReader[H <: BlockHeader]
         }
 
         @inline def remainingLength = {
-            blockBuilder(block).blockLength - (block.position - blockBuilder.headerSize)
+            blockBuilder(block).blockLength - (block.position() - blockBuilder.headerSize)
         }
 
         if (eof) { -1 }
@@ -108,7 +108,7 @@ class ByteBufferBlockReader[H <: BlockHeader]
     }
 
     @inline private def eob = {
-        block.position - blockBuilder.headerSize == blockBuilder(block).blockLength
+        block.position() - blockBuilder.headerSize == blockBuilder(block).blockLength
     }
 
     @inline private def eof = {

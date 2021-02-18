@@ -207,7 +207,7 @@ class NetlinkMessageTest extends Suite with Matchers {
             val pos = Random nextInt 500
             buf position pos
             NetlinkMessage alignBuffer buf
-            val aligned = buf.position
+            val aligned = buf.position()
             (aligned & 3) shouldBe 0
             aligned shouldBe (NetlinkMessage align pos)
         }

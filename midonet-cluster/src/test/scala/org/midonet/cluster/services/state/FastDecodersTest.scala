@@ -77,8 +77,7 @@ class FastDecodersTest extends FeatureSpec
                               "7736b89-c5f3-4e90-bebf-c404b94f99f1",
                               "47736b89-c5f3-e90-bebf-c404b94f99f1",
                               "00000000-0000-0000-0000-000000000000",
-                              "0-1-2-3-4",
-                              "0-1-2-3-4----")) {
+                              "0-1-2-3-4")) {
                 testUUID(uuid, true)
             }
         }
@@ -90,6 +89,7 @@ class FastDecodersTest extends FeatureSpec
                               "47736b89-c5f324e90-bebf-c404b94f99f1",
                               "0-1-2-3--4",
                               "00-1-2-3-",
+                              "0-1-2-3-4----",
                               "1",
                               null)) {
                 testUUID(uuid, false)

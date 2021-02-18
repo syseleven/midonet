@@ -25,8 +25,8 @@ dependencies {
     compile project(':nsdb')
 }
 
-task preparePkg(type: Copy, dependsOn: installShadowApp) {
-    from("${buildDir}/installShadow/${project.name}/lib/${project.name}-${midonetVersion}-all.jar") {
+task preparePkg(type: Copy, dependsOn: installShadowDist) {
+    from("${buildDir}/install/${project.name}-shadow/lib/${project.name}-${midonetVersion}-all.jar") {
         into "usr/share/midonet-tools"
     }
     from("${buildDir}/man/") {
@@ -67,7 +67,7 @@ debian.doFirst {
     project.packaging.version = project.debVersion
     project.packaging.fpmOpts = project.packaging.fpmOpts.clone()
     project.packaging.fpmOpts.addAll([
-        '-d', 'openjdk-8-jdk-headless | java8-runtime-headless | java8-runtime'])
+        '-d', 'java11-runtime-headless | java11-runtime'])
 }
 
 rpm.doFirst {
@@ -76,10 +76,10 @@ rpm.doFirst {
     project.packaging.fpmOpts = project.packaging.fpmOpts.clone()
     switch(project.rhelTarget) {
       case "el7":
-        project.packaging.fpmOpts.addAll(['--depends', 'java-openjdk-headless >= 1.8.0'])
+        project.packaging.fpmOpts.addAll(['--depends', 'java-11-openjdk-headless'])
         break
       case "sles12":
-        project.packaging.fpmOpts.addAll(['--depends', 'java-1_8_0-openjdk-headless'])
+        project.packaging.fpmOpts.addAll(['--depends', 'java-11-openjdk-headless'])
         break
       default:
         logger.warn("Invalid project-rhelTarget: " + project.rhelTarget +

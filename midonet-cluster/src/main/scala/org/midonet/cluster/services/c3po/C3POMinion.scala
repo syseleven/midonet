@@ -179,7 +179,7 @@ object C3POMinion {
             throw new IllegalArgumentException(
                 NotDriverSubclassErrMsg.format(driverClass.getName))
 
-        val driver = driverClass.newInstance().asInstanceOf[Driver]
+        val driver = driverClass.getDeclaredConstructor().newInstance().asInstanceOf[Driver]
         if (!driver.acceptsURL(cnxnStr))
             throw new IllegalArgumentException(
                 InvalidCnxnStrErrMsg.format(cnxnStr))

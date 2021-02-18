@@ -42,6 +42,13 @@ fi
 
 JAVA_LIBRARY_PATH=-Djava.library.path=/lib:/usr/lib
 
+# Avoid "Illegal reflective access by org.midonet.netlink.NetlinkSelectorProvider"
+JVM_OPTS="$JVM_OPTS --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+# Avoid "Illegal reflective access by com.google.inject.internal.cglib.core.$ReflectUtils$1"
+# (see https://github.com/google/guice/issues/1133)
+JVM_OPTS="$JVM_OPTS --add-opens=java.base/java.lang=ALL-UNNAMED"
+
 $JAVA -Dlogback.configurationFile=file:/etc/midolman/logback-dpctl.xml $JAVA_LIBRARY_PATH \
     -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xverify:none \
+    $JVM_OPTS \
     -cp $MIDO_JAR org.midonet.midolman.tools.MmCtl $*
