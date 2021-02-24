@@ -307,7 +307,7 @@ public class IPv6 extends BasePacket {
         if (IPv6.nextHeaderClassMap.containsKey(this.nextHeader)) {
             Class<? extends IPacket> clazz = IPv6.nextHeaderClassMap.get(this.nextHeader);
             try {
-                payload = clazz.newInstance();
+                payload = clazz.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("Error parsing payload for IPv6 packet", e);
             }

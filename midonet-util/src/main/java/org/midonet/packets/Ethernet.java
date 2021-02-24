@@ -299,7 +299,7 @@ public class Ethernet extends BasePacket {
         if (Ethernet.etherTypeClassMap.containsKey(this.etherType)) {
             Class<? extends IPacket> clazz = Ethernet.etherTypeClassMap.get(this.etherType);
             try {
-                this.payload = clazz.newInstance().deserialize(bb);
+                this.payload = clazz.getDeclaredConstructor().newInstance().deserialize(bb);
             } catch (Exception e) {
                 this.payload = (new Data()).deserialize(bb);
             }

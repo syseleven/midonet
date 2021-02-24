@@ -83,9 +83,8 @@ class UnixDomainSocketChannel(val underlyingChannel: UnixDomainChannel,
     def kill(): Unit =
         underlyingChannel.kill()
 
-    def translateAndSetInterestOps(ops: Int,
-                                   sk: sun.nio.ch.SelectionKeyImpl): Unit =
-        underlyingChannel.translateAndSetInterestOps(ops, sk)
+    def translateInterestOps(ops: Int): Int =
+        underlyingChannel.translateInterestOps(ops)
 
     def translateAndSetReadyOps(ops: Int,
                                 sk: sun.nio.ch.SelectionKeyImpl): Boolean =

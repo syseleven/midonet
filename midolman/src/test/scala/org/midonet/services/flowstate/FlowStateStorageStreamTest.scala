@@ -130,7 +130,7 @@ class FlowStateStorageStreamTest extends FlowStateBaseTest {
             header.isValid shouldBe true
             header.lastEntryTime should be > 0L
             header.blockLength shouldBe 4
-            block.position shouldBe FlowStateBlock.headerSize + header.blockLength
+            block.position() shouldBe FlowStateBlock.headerSize + header.blockLength
 
             val newBlock = ByteBuffer.wrap(block.array)
             FlowStateBlock.reset(newBlock)
@@ -139,7 +139,7 @@ class FlowStateStorageStreamTest extends FlowStateBaseTest {
             header.isValid shouldBe false
             header.lastEntryTime shouldBe -1
             header.blockLength shouldBe 0
-            newBlock.position shouldBe FlowStateBlock.headerSize
+            newBlock.position() shouldBe FlowStateBlock.headerSize
             header.toString.endsWith(
                 "[magic: XFlowState, last: -1, length: 0]") shouldBe true
         }
@@ -154,7 +154,7 @@ class FlowStateStorageStreamTest extends FlowStateBaseTest {
             header.isValid shouldBe true
             header.lastEntryTime should be > 0L
             header.blockLength shouldBe 4
-            block.position shouldBe FlowStateBlock.headerSize + header.blockLength
+            block.position() shouldBe FlowStateBlock.headerSize + header.blockLength
 
             val newBlock = ByteBuffer.wrap(block.array)
             FlowStateBlock.init(newBlock)
@@ -163,7 +163,7 @@ class FlowStateStorageStreamTest extends FlowStateBaseTest {
             header.isValid shouldBe true
             header.lastEntryTime should be > 0L
             header.blockLength shouldBe 4
-            block.position shouldBe FlowStateBlock.headerSize + header.blockLength
+            block.position() shouldBe FlowStateBlock.headerSize + header.blockLength
         }
     }
 
@@ -231,7 +231,7 @@ class FlowStateStorageStreamTest extends FlowStateBaseTest {
             And("The data on the 2nd buffer should not fit on the 1st buffer")
             val compressedData2 = header2.blockLength -
                                   FlowStateBlock.headerSize
-            compressedData2 should be > buf1.capacity - buf1.limit
+            compressedData2 should be > buf1.capacity - buf1.limit()
         }
 
         scenario("Trying to write a message bigger than the block size") {

@@ -125,7 +125,7 @@ object ZoomConvert {
         val clazz = newFactory(proto, pojoClass)
         val defaultConstructor = getDefaultConstructor(clazz)
         if (defaultConstructor ne null) {
-            val pojo = clazz.newInstance().asInstanceOf[T]
+            val pojo = clazz.getDeclaredConstructor().newInstance().asInstanceOf[T]
             from(proto, pojo, pojo.getClass)
             pojo.afterFromProto(proto)
             pojo
@@ -446,7 +446,7 @@ object ZoomConvert {
         if (null != zoomClass &&
             !zoomClass.factory().equals(classOf[DefaultFactory])) {
             factories.getOrElseUpdate(zoomClass.factory(),
-                                      zoomClass.factory().newInstance())
+                                      zoomClass.factory().getDeclaredConstructor().newInstance())
                 .asInstanceOf[Factory[_, U]]
                 .getType(proto) match {
                 case c: Class[_] if clazz != c =>
@@ -554,7 +554,7 @@ object ZoomConvert {
         } else {
             classOf[DefaultConverter]
         }
-        converters.getOrElseUpdate(converter, converter.newInstance())
+        converters.getOrElseUpdate(converter, converter.getDeclaredConstructor().newInstance())
     }
 
     /** Gets a converter instance for an [[Array]] field. */
@@ -601,7 +601,7 @@ object ZoomConvert {
     @inline
     private def getMapConverter(zoomField: ZoomField): Converter[_,_] = {
         converters.getOrElseUpdate(zoomField.converter,
-                                   zoomField.converter.newInstance())
+                                   zoomField.converter.getDeclaredConstructor().newInstance())
     }
 
     /**

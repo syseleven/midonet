@@ -22,7 +22,7 @@ apply from: "${rootProject.projectDir}/git.gradle"
 jar {
     manifest {
         attributes 'Implementation-Title': 'Midolman Java daemon',
-                   'Implementation-Version': version
+                   'Implementation-Version': archiveVersion
     }
 }
 
@@ -80,7 +80,10 @@ dependencies {
             libraries.vpp_registry,
             "com.fasterxml.jackson.core:jackson-databind:2.3.0"
 
-    runtime libraries.jackson_jaxrs
+    runtime libraries.jackson_jaxrs,
+            libraries.jaxb_api,
+            libraries.jaxb_core,
+            libraries.jaxb_runtime
 
     testCompile project(':midonet-cluster')
     testCompile project(path: ':nsdb', configuration: 'tests')
@@ -148,8 +151,8 @@ artifacts {
     tests jarTest
 }
 
-task preparePkg(type: Copy, dependsOn: installShadowApp) {
-    from("${buildDir}/installShadow/${project.name}/lib/${project.name}-${midonetVersion}-all.jar") {
+task preparePkg(type: Copy, dependsOn: installShadowDist) {
+    from("${buildDir}/install/${project.name}-shadow/lib/${project.name}-${midonetVersion}-all.jar") {
         into "usr/share/midolman"
     }
     from("${buildDir}/man/") {
@@ -226,14 +229,14 @@ task preparePkg(type: Copy, dependsOn: installShadowApp) {
     }
 }
 
-task debianPrepare(type: Copy, dependsOn: installShadowApp) {
+task debianPrepare(type: Copy, dependsOn: installShadowDist) {
     from("src/systemd/midolman.service") {
         into "lib/systemd/system"
     }
     into "${pkgDestDir}"
 }
 
-task rhel7Prepare(type: Copy, dependsOn: installShadowApp) {
+task rhel7Prepare(type: Copy, dependsOn: installShadowDist) {
     from("src/systemd/midolman.service") {
         into "usr/lib/systemd/system"
     }
@@ -279,11 +282,11 @@ debian.doFirst {
         '-d', 'python-setproctitle',
         '-d', 'quagga (>= 0.99.23)',
         '-d', 'libreswan (>= 1:3.29)',
-        '-d', 'openjdk-8-jdk-headless | java8-runtime-headless | java8-runtime',
+        '-d', 'java11-runtime | java11-runtime-headless',
         '-d', 'iproute (>= 20111117-1ubuntu2.1)',
         '-d', 'linux-image-generic (>= 3.13.0) | linux-image-virtual (>= 3.13.0) | linux-image-generic-lts-trusty (>= 3.13.0) | linux-image-virtual-lts-trusty (>= 3.13.0) | openvswitch-datapath-dkms (>= 1.10)',
         '-d', 'vpp',
-        '--deb-recommends', 'java8-runtime-headless | java8-runtime',
+        '--deb-recommends', 'java11-runtime-headless | java11-runtime',
         '--after-install', "${project.projectDir}/src/deb/control/postinst",
         '--before-install', "${project.projectDir}/src/deb/control/preinst",
         '--after-remove', "${project.projectDir}/src/deb/control/postrm",
@@ -307,7 +310,7 @@ rpm.doFirst {
       case "el7":
         project.packaging.fpmOpts.addAll([
             '--depends', 'python-setproctitle',
-            '--depends', 'java-openjdk-headless >= 1.8.0',
+            '--depends', 'java-11-openjdk-headless',
             '--depends', 'libreswan >= 1.15.0',
             '--depends', 'quagga >= 0.99.23',
             '--depends', 'vpp'
@@ -316,7 +319,7 @@ rpm.doFirst {
       case "sles12":
         project.packaging.fpmOpts.addAll([
             '--depends', 'iproute2',
-            '--depends', 'java-1_8_0-openjdk-headless',
+            '--depends', 'java-11-openjdk-headless',
             '--depends', 'quagga >= 0.99.22',
         ])
         break
@@ -345,7 +348,7 @@ tar.doLast {
 
 mainClassName = "org.midonet.midolman.Midolman"
 
-task runWithSudo(type:Exec, dependsOn: installApp) {
+task runWithSudo(type:Exec, dependsOn: installDist) {
     commandLine 'sudo', '../misc/run-java-with-env.sh'
     commandLine += "${project.projectDir}/conf/midolman-env.sh.small"
     commandLine += '-Djava.library.path=/lib:/usr/lib'

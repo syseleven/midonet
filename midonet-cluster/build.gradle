@@ -22,12 +22,12 @@ apply from: "${rootProject.projectDir}/git.gradle"
 jar {
     manifest {
         attributes 'Implementation-Title': 'MidoNet Cluster',
-        'Implementation-Version': version
+        'Implementation-Version': archiveVersion
     }
 }
 
 repositories {
-    maven { url "http://nexus.opendaylight.org/content/repositories/opendaylight.release/" }
+    maven { url "https://nexus.opendaylight.org/content/repositories/opendaylight.release/" }
 }
 
 sourceSets {
@@ -117,8 +117,8 @@ cobertura {
 // PACKAGING TASKS //
 /////////////////////
 
-task preparePkg(type: Copy, dependsOn: installShadowApp) {
-    from("${buildDir}/installShadow/${project.name}/lib/${project.name}-${midonetVersion}-all.jar") {
+task preparePkg(type: Copy, dependsOn: installShadowDist) {
+    from("${buildDir}/install/${project.name}-shadow/lib/${project.name}-${midonetVersion}-all.jar") {
         into "/usr/share/midonet-cluster"
     }
     from("conf") {
@@ -148,14 +148,14 @@ task preparePkg(type: Copy, dependsOn: installShadowApp) {
     }
 }
 
-task debianPrepare(type: Copy, dependsOn: installShadowApp) {
+task debianPrepare(type: Copy, dependsOn: installShadowDist) {
     from("src/systemd/midonet-cluster.service") {
         into "lib/systemd/system"
     }
     into "${pkgDestDir}"
 }
 
-task rhel7Prepare(type: Copy, dependsOn: installShadowApp) {
+task rhel7Prepare(type: Copy, dependsOn: installShadowDist) {
     from("src/systemd/midonet-cluster.service") {
         into "usr/lib/systemd/system"
     }
@@ -193,8 +193,8 @@ debian.doFirst {
     project.packaging.fpmOpts = project.packaging.fpmOpts.clone()
     project.packaging.fpmOpts.addAll([
             '-d', "midonet-tools (>= ${project.debVersion})",
-            '-d', 'openjdk-8-jdk-headless | java8-runtime-headless | java8-runtime',
-            '--deb-recommends', 'java8-runtime-headless | java8-runtime',
+            '-d', 'java11-runtime-headless | java11-runtime',
+            '--deb-recommends', 'java11-runtime-headless | java11-runtime',
             '--after-install', "${project.projectDir}/src/deb/control/postinst",
             '--before-install', "${project.projectDir}/src/deb/control/preinst",
             '--after-remove', "${project.projectDir}/src/deb/control/postrm",
@@ -213,10 +213,10 @@ rpm.doFirst {
             '--before-remove', "${project.projectDir}/src/rhel7/control/prerm"])
     switch(project.rhelTarget) {
       case "el7":
-        project.packaging.fpmOpts.addAll(['--depends', 'java-openjdk-headless >= 1.8.0'])
+        project.packaging.fpmOpts.addAll(['--depends', 'java-11-openjdk-headless'])
         break
       case "sles12":
-        project.packaging.fpmOpts.addAll(['--depends', 'java-1_8_0-openjdk-headless'])
+        project.packaging.fpmOpts.addAll(['--depends', 'java-11-openjdk-headless'])
         break
       default:
         logger.warn("Invalid project-rhelTarget: " + project.rhelTarget +

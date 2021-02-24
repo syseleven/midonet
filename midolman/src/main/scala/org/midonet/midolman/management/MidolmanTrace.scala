@@ -33,13 +33,13 @@ trait TraceCommand {
 
 abstract class Matcher(name: String) extends Subcommand(name) {
     implicit def scallopShortToBoxed(opt: ScallopOption[Short]): JShort =
-        opt.get.map( new JShort(_) ).orNull
+        opt.get.map( JShort.valueOf(_) ).orNull
 
     implicit def scallopByteToBoxed(opt: ScallopOption[Byte]): JByte =
-        opt.get.map( new JByte(_) ).orNull
+        opt.get.map( JByte.valueOf(_) ).orNull
 
     implicit def scallopIntToBoxed(opt: ScallopOption[Int]): JInt =
-        opt.get.map( new JInt(_) ).orNull
+        opt.get.map( JInt.valueOf(_) ).orNull
 
     implicit def scallopStringToNaked(opt: ScallopOption[String]): String =
         opt.get.orNull

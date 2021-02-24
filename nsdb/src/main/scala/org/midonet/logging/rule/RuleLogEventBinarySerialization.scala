@@ -56,13 +56,13 @@ object RuleLogEventBinarySerialization {
         val buf = ByteBuffer.wrap(bytes, 0, len)
         while (buf.hasRemaining) {
             val keyLen = buf.getShort
-            val key = new String(buf.array(), buf.position, keyLen, Utf8)
-            buf.position(buf.position + keyLen)
+            val key = new String(buf.array(), buf.position(), keyLen, Utf8)
+            buf.position(buf.position() + keyLen)
 
             val valueLen = buf.getShort
-            val value = new String(buf.array(), buf.position, valueLen, Utf8)
+            val value = new String(buf.array(), buf.position(), valueLen, Utf8)
             buf.slice()
-            buf.position(buf.position + valueLen)
+            buf.position(buf.position() + valueLen)
             bldr += ((key, value))
         }
         bldr.toList
@@ -101,7 +101,7 @@ class RuleLogEventBinaryDeserializer(path: String) {
             throw ex
     }
 
-    def hasNext: Boolean = pos < byteBuf.limit
+    def hasNext: Boolean = pos < byteBuf.limit()
 
     case class FileHeader(templateId: Int, schemaId: Int,
                           version: Int, blockLength: Int)

@@ -16,7 +16,6 @@
 package org.midonet.util.process;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -215,24 +214,6 @@ public class ProcessHelper {
                 }
             }
         };
-    }
-
-    public static int getProcessPid(Process process) {
-        Field field;
-        try {
-            field = process.getClass().getDeclaredField("pid");
-            field.setAccessible(true);
-            Object o = field.get(process);
-            if (o instanceof Integer) {
-                return Integer.class.cast(o);
-            }
-
-            return -1;
-        } catch (NoSuchFieldException e) {
-            return -1;
-        } catch (IllegalAccessException e) {
-            return -1;
-        }
     }
 
     public interface RunnerConfiguration {

@@ -112,7 +112,7 @@ public final class FastDecoders {
                     end = s.indexOf('-', start);
                 } else {
                     end = s.length();
-                    while (end > start && s.charAt(end - 1) == '-') --end;
+                    if (end > start && s.charAt(end - 1) == '-') return false;
                 }
                 if (end <= start || end - start > p.maxlen) return false;
                 bits[p.dest] |= hexToLong(s, start, end - 1) << p.shift;

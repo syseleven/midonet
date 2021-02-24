@@ -453,7 +453,7 @@ public class IPv4 extends BasePacket {
         if (IPv4.protocolClassMap.containsKey(this.protocol)) {
             Class<? extends IPacket> clazz = IPv4.protocolClassMap.get(this.protocol);
             try {
-                payload = clazz.newInstance();
+                payload = clazz.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 payload = new Data();
             }

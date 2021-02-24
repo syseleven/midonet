@@ -17,12 +17,12 @@
 package org.midonet.util.netty
 
 import java.net.URI
-
 import com.google.protobuf.GeneratedMessage
 import io.netty.channel._
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.http.websocketx._
 import io.netty.handler.codec.http._
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete
 import io.netty.handler.codec.protobuf.{ProtobufDecoder, ProtobufEncoder, ProtobufVarint32FrameDecoder, ProtobufVarint32LengthFieldPrepender}
 import io.netty.handler.ssl.SslContext
 import io.netty.util.concurrent.{DefaultEventExecutorGroup, EventExecutorGroup}
@@ -172,7 +172,7 @@ class ProtoBufWebSocketServerAdapter[T <: GeneratedMessage](
             super.channelUnregistered(ctx)
         }
         override def userEventTriggered(ctx: ChannelHandlerContext, ev: Any) = {
-            if (ev == ServerHandshakeStateEvent.HANDSHAKE_COMPLETE)
+            if (ev.isInstanceOf[HandshakeComplete])
                 triggerHandshakeCompleted(handshaked, ctx.channel())
             super.userEventTriggered(ctx, ev)
         }

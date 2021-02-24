@@ -86,7 +86,7 @@ object FlowStateBlock extends BlockHeaderBuilder[TimedBlockHeader] {
     }
 
     override def update(buffer: ByteBuffer, params: AnyVal*): Unit = {
-        buffer.putInt(LengthOffset, buffer.position - headerSize)
+        buffer.putInt(LengthOffset, buffer.position() - headerSize)
         buffer.putLong(LastTimeOffset, NanoClock.DEFAULT.tick)
     }
 

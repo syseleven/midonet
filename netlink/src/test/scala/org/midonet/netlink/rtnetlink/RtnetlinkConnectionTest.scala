@@ -85,10 +85,10 @@ class RtnetlinkConnectionTest extends FeatureSpec
         val copied = BytesUtil.instance.allocate(buf.capacity())
         copied.put(buf)
         copied.position(NetlinkMessage.HEADER_SIZE)
-        copied.putShort(copied.position + NetlinkMessage.NLMSG_TYPE_OFFSET,
+        copied.putShort(copied.position() + NetlinkMessage.NLMSG_TYPE_OFFSET,
             NLMessageType.DONE)
         if (multi) {
-            copied.putShort(copied.position + NetlinkMessage.NLMSG_FLAGS_OFFSET,
+            copied.putShort(copied.position() + NetlinkMessage.NLMSG_FLAGS_OFFSET,
                 (NLFlag.MULTI | NLFlag.ACK).toShort)
         }
         copied

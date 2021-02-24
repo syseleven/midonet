@@ -144,7 +144,7 @@ class FlowStateWriteHandler(context: Context,
 
     private def handleUpdateOwnedPorts(buffer: ByteBuffer): Unit = {
         var ownedPorts = Set.empty[UUID]
-        while (buffer.position < buffer.limit()) {
+        while (buffer.position() < buffer.limit()) {
             ownedPorts += new UUID(buffer.getLong, buffer.getLong)
         }
         log debug s"Received new owned ports: $ownedPorts"

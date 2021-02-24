@@ -38,7 +38,7 @@ import org.midonet.odp.ports.VxLanTunnelPort
 import org.midonet.packets.NatState.NatBinding
 import org.midonet.packets.util.PacketBuilder._
 import org.midonet.packets.{IPv4Addr, MAC}
-import org.midonet.sdn.state.{FlowStateTransaction, ShardedFlowStateTable}
+import org.midonet.sdn.state.{FlowStateTransaction, OnHeapShardedFlowStateTable}
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -62,9 +62,9 @@ class ConnTrackBenchmark extends MidolmanBenchmark {
         override def tunnelRecircOutputAction: FlowActionOutput = null
         override def hostRecircOutputAction: FlowActionOutput = null
     }
-    val conntrackTable = new ShardedFlowStateTable[ConnTrackKey, ConnTrackValue].addShard()
-    val natTable = new ShardedFlowStateTable[NatKey, NatBinding].addShard()
-    val traceTable = new ShardedFlowStateTable[TraceKey, TraceContext].addShard()
+    val conntrackTable = new OnHeapShardedFlowStateTable[ConnTrackKey, ConnTrackValue].addShard()
+    val natTable = new OnHeapShardedFlowStateTable[NatKey, NatBinding].addShard()
+    val traceTable = new OnHeapShardedFlowStateTable[TraceKey, TraceContext].addShard()
     implicit val conntrackTx = new FlowStateTransaction(conntrackTable)
     implicit val natTx = new FlowStateTransaction(natTable)
     implicit val traceTx = new FlowStateTransaction(traceTable)

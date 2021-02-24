@@ -79,7 +79,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
         }
 
         override def update(buffer: ByteBuffer, params: AnyVal*): Unit = {
-            buffer.putInt(LengthOffset, buffer.position - headerSize)
+            buffer.putInt(LengthOffset, buffer.position() - headerSize)
             buffer.putLong(LastTimeOffset, currentTime)
         }
 
@@ -149,7 +149,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
             outStream.write(outBlock.array())
 
             Then("The byte buffer only contains the header")
-            val position = outStream.buffers.head.get.position
+            val position = outStream.buffers.head.get.position()
             position shouldBe blockBuilder.headerSize + 5
             blockBuilder(outStream.buffers.head.get).blockLength shouldBe 5
 
@@ -175,7 +175,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
             outStream.write(outBlock1.array())
 
             Then("Only one block should have been allocated")
-            var position = outStream.buffers.head.get.position
+            var position = outStream.buffers.head.get.position()
             position shouldBe blockBuilder.headerSize + 10
             outStream.buffers.length shouldBe 1
             blockBuilder(outStream.buffers.head.get).blockLength shouldBe 10
@@ -186,7 +186,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
             outStream.write(outBlock2.array())
 
             Then("Another block is allocated")
-            position = outStream.buffers.head.get.position
+            position = outStream.buffers.head.get.position()
             position shouldBe blockBuilder.headerSize + 10
             outStream.buffers.length shouldBe 2
             blockBuilder(outStream.buffers.head.get).blockLength shouldBe 10
@@ -232,7 +232,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
             outStream.write(outBlock1.array())
 
             Then("Only one block should have been allocated")
-            var position = outStream.buffers.head.get.position
+            var position = outStream.buffers.head.get.position()
             position shouldBe blockBuilder.headerSize + 5
             outStream.buffers.length shouldBe 1
             blockBuilder(outStream.buffers.head.get).blockLength shouldBe 5
@@ -243,7 +243,7 @@ class ByteBufferBlockStreamTest extends FeatureSpec
             outStream.write(outBlock2.array())
 
             Then("Another block is allocated")
-            position = outStream.buffers.head.get.position
+            position = outStream.buffers.head.get.position()
             position shouldBe blockBuilder.headerSize + 10
             outStream.buffers.length shouldBe 2
             blockBuilder(outStream.buffers.head.get).blockLength shouldBe 10

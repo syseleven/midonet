@@ -295,7 +295,7 @@ class FlowStateReplicatorTest extends MidolmanSpec with TopologyBuilder {
             Then("Serialized packet should have the appropriate length")
             val bb = ByteBuffer.allocate(FlowStateEthernet.MTU)
             fse.serialize(bb)
-            bb.position should be (len +
+            bb.position() should be (len +
                 FlowStateEthernet.FLOW_STATE_ETHERNET_OVERHEAD)
             bb.flip()
 

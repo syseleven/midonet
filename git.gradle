@@ -20,43 +20,45 @@ class GitPropertiesPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         project.ext.gitPropertiesPath = "${project.buildDir}/resources/main/git.properties"
-        project.task('gitProps', group: 'Build') << {
-            this.propsFile = new File(project.ext.gitPropertiesPath)
-            project.exec {
-                commandLine 'git describe'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.describe = { standardOutput.toString().trim() }
-                workingDir project.projectDir
-            }
-            project.exec {
-                commandLine 'git rev-parse HEAD'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.id = { standardOutput.toString().trim() }
-            }
-            project.exec {
-                commandLine 'git log -1 HEAD --pretty=format:%ae'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.commitUser = { standardOutput.toString().trim() }
-            }
-            project.exec {
-                commandLine 'git rev-parse --abbrev-ref HEAD'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.branch = { standardOutput.toString().trim() }
-            }
-            project.exec {
-                commandLine 'git log -1 HEAD --pretty=format:%ad'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.commitDate = { standardOutput.toString().trim() }
-            }
-            project.exec {
-                commandLine 'date'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.buildDate = { standardOutput.toString().trim() }
-            }
-            project.exec {
-                commandLine 'whoami'.split()
-                standardOutput = new ByteArrayOutputStream()
-                this.buildUser = { standardOutput.toString().trim() }
+        project.task('gitProps', group: 'Build') {
+            doLast {
+                this.propsFile = new File(project.ext.gitPropertiesPath)
+                project.exec {
+                    commandLine 'git describe'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.describe = { standardOutput.toString().trim() }
+                    workingDir project.projectDir
+                }
+                project.exec {
+                    commandLine 'git rev-parse HEAD'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.id = { standardOutput.toString().trim() }
+                }
+                project.exec {
+                    commandLine 'git log -1 HEAD --pretty=format:%ae'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.commitUser = { standardOutput.toString().trim() }
+                }
+                project.exec {
+                    commandLine 'git rev-parse --abbrev-ref HEAD'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.branch = { standardOutput.toString().trim() }
+                }
+                project.exec {
+                    commandLine 'git log -1 HEAD --pretty=format:%ad'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.commitDate = { standardOutput.toString().trim() }
+                }
+                project.exec {
+                    commandLine 'date'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.buildDate = { standardOutput.toString().trim() }
+                }
+                project.exec {
+                    commandLine 'whoami'.split()
+                    standardOutput = new ByteArrayOutputStream()
+                    this.buildUser = { standardOutput.toString().trim() }
+                }
             }
         }
         project.tasks.gitProps.doLast {
@@ -73,6 +75,6 @@ class GitPropertiesPlugin implements Plugin<Project> {
 
         project.tasks.jar.dependsOn project.tasks.gitProps
         project.tasks.gitProps.outputs.file project.ext.gitPropertiesPath
-        project.tasks.gitProps.inputs.files project.sourceSets.main.output.classesDir
+        project.tasks.gitProps.inputs.files project.sourceSets.main.output.classesDirs
     }
 }
