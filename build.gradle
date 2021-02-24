@@ -144,7 +144,6 @@ project.ext {
         slf4j: "org.slf4j:slf4j-api:1.7.7",
         snappy: "org.xerial.snappy:snappy-java:1.1.2.4",
         sqlite: "org.xerial:sqlite-jdbc:3.8.7",
-        //sun_tools: project.files("${System.properties['java.home']}/../lib/tools.jar"),
         test_frameworks: ["junit:junit:4.11",
                           "org.powermock:powermock-module-junit4:1.4.11",
                           "org.powermock:powermock-api-mockito:1.4.11",
@@ -206,7 +205,6 @@ allprojects {
         tasks.withType(ScalaCompile) {
             scalaCompileOptions.forkOptions.with {
                 memoryMaximumSize = '1g'
-		// jvmArgs = ['--add-exports', 'java.base/sun.nio.ch=ALL-UNNAMED']
             }
             scalaCompileOptions.deprecation = true
             scalaCompileOptions.unchecked = true
