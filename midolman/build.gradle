@@ -249,7 +249,7 @@ packaging {
     vendor = project.vendor
     url = project.url
     description = 'Midolman is a virtual network controller'
-    dependencies = ['haproxy', 'netcat']
+    dependencies = ['haproxy', 'netcat-openbsd', 'sudo']
     confFiles = ['/etc/midolman/midolman-env.sh',
                  '/etc/midolman/midolman-env.sh.compute.large',
                  '/etc/midolman/midolman-env.sh.gateway.large',
